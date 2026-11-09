@@ -29,6 +29,11 @@ body{
 /* testata */
 header{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
 .logo{font-family:var(--mano);font-weight:700;font-size:2.4rem;line-height:1;transform:rotate(-3deg);margin:0}
+.sync{width:12px;height:12px;border-radius:50%;border:0;background:#aab4c3;align-self:flex-end;margin:0 0 9px -4px;padding:0;cursor:pointer}
+.sync.ok{background:#3FAF6A}.sync.err{background:var(--corallo)}
+.tira{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));width:46px;height:46px;margin-left:-23px;border-radius:50%;background:var(--carta);box-shadow:0 3px 0 #9fc4cc;display:grid;place-items:center;font-size:1.5rem;z-index:8;transform:translateY(-80px);opacity:0}
+.tira.gira{animation:gira .8s linear infinite}
+@keyframes gira{to{rotate:360deg}}
 .ver{font-size:.75rem;color:var(--ink-soft);background:var(--carta);border-radius:10px;padding:2px 7px;align-self:flex-end;margin-bottom:6px}
 header .sp{flex:1}
 .btn-ico{border:0;background:var(--carta);color:var(--ink);width:40px;height:40px;border-radius:50%;font-size:1.1rem;box-shadow:0 2px 0 #9fc4cc;cursor:pointer;display:grid;place-items:center}
@@ -138,7 +143,7 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
 <div id="app">
   <header>
     <h1 class="logo">Rigordati!!</h1>
-    <span class="ver" id="ver"></span>
+    <span class="ver" id="ver"></span><button class="sync" id="sync" title="Stato collegamento"></button>
     <span class="sp"></span>
     <button class="btn-scarica" id="btnScarica" hidden>Scarica l'app</button>
     <button class="btn-ico" id="btnCampana" title="Attiva notifiche" hidden>🔔</button>
@@ -211,15 +216,16 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
   <p class="errore" id="accErr"></p>
 </div>
 
+<div class="tira" id="tira">🦆</div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { initializeFirestore, persistentLocalCache, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.2.0';
+const VERSIONE = 'v0.2.1';
 // Notifiche: da compilare
 const VAPID = 'BOwgCIEwbSvOif9lH_KJxnd9ctALyRjmquTQa1_gP9Su3QzJCT0fqVXbQF7DBs3AnLPgODxee2UI4Etpv_gjDhs';
 const WORKER = 'https://rigordati.wolve666.workers.dev';
@@ -235,7 +241,7 @@ const firebaseConfig = {
 };
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
-const db = initializeFirestore(fb, { localCache: persistentLocalCache() });
+const db = initializeFirestore(fb, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
 const voci = collection(db, 'voci');
 
 const $ = id => document.getElementById(id);
@@ -312,10 +318,12 @@ onAuthStateChanged(auth, u => {
   io = { email: u.email, nome: (u.displayName || u.email).split(' ')[0] };
   $('accesso').classList.remove('on');
   preparaNotifiche();
-  stacca = onSnapshot(voci, snap => {
+  stacca = onSnapshot(voci, { includeMetadataChanges: true }, snap => {
+    statoSync(snap.metadata.fromCache ? '' : 'ok', snap.metadata.fromCache ? 'Offline: uso i dati salvati sul telefono' : 'Collegato e sincronizzato');
     tutte = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     disegna();
   }, err => {
+    statoSync('err', 'Errore di collegamento: ' + err.code);
     if (err.code === 'permission-denied') {
       $('accErr').textContent = `L'account ${u.email} non è abilitato. Entra con l'account giusto.`;
       signOut(auth);
@@ -545,6 +553,30 @@ document.addEventListener('visibilitychange', async () => {
   (await reg?.getNotifications() || []).forEach(n => n.close());
 });
 
+/* ---------- stato collegamento ---------- */
+let syncMsg = 'In collegamento…';
+function statoSync(cls, msg) { $('sync').className = 'sync ' + cls; syncMsg = msg; }
+$('sync').onclick = () => toast(syncMsg);
+
+/* ---------- trascina giù per aggiornare ---------- */
+(() => {
+  const m = document.querySelector('main'), t = $('tira'); let y0 = null, dy = 0;
+  m.addEventListener('touchstart', e => { y0 = m.scrollTop <= 0 && !foglioAperto ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  m.addEventListener('touchmove', e => {
+    if (y0 === null) return;
+    dy = Math.max(0, e.touches[0].clientY - y0);
+    const k = Math.min(dy, 120);
+    t.style.transform = `translateY(${k - 60}px) rotate(${k * 3}deg)`; t.style.opacity = Math.min(1, k / 80);
+  }, { passive: true });
+  m.addEventListener('touchend', async () => {
+    if (y0 === null) return; y0 = null;
+    if (dy < 90) { t.style.transform = ''; t.style.opacity = 0; return; }
+    t.style.transform = 'translateY(40px)'; t.classList.add('gira');
+    try { const r = await navigator.serviceWorker?.getRegistration(); await r?.update(); } catch (_) {}
+    setTimeout(() => location.reload(), 400);
+  });
+})();
+
 /* ---------- extra ---------- */
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2200); }
 function coriandoli(x, y) {
@@ -567,7 +599,11 @@ $('btnScarica').onclick = async () => {
   else toast('Apri il menu ⋮ di Chrome e scegli "Aggiungi a schermata Home"');
 };
 window.addEventListener('appinstalled', () => $('btnScarica').hidden = true);
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update());
+  let ricaricato = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (!ricaricato) { ricaricato = true; location.reload(); } });
+}
 </script>
 </body>
 </html>
