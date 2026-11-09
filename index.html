@@ -141,6 +141,7 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
     <span class="ver" id="ver"></span>
     <span class="sp"></span>
     <button class="btn-scarica" id="btnScarica" hidden>Scarica l'app</button>
+    <button class="btn-ico" id="btnCampana" title="Attiva notifiche" hidden>🔔</button>
     <button class="btn-ico" id="btnEsci" title="Esci">⎋</button>
   </header>
 
@@ -215,9 +216,13 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { initializeFirestore, persistentLocalCache, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { initializeFirestore, persistentLocalCache, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.1.1';
+const VERSIONE = 'v0.2.0';
+// Notifiche: da compilare
+const VAPID = 'BOwgCIEwbSvOif9lH_KJxnd9ctALyRjmquTQa1_gP9Su3QzJCT0fqVXbQF7DBs3AnLPgODxee2UI4Etpv_gjDhs';
+const WORKER = 'https://rigordati.wolve666.workers.dev';
 document.getElementById('ver').textContent = VERSIONE;
 
 const firebaseConfig = {
@@ -306,6 +311,7 @@ onAuthStateChanged(auth, u => {
   if (!u) { io = null; $('accesso').classList.add('on'); return; }
   io = { email: u.email, nome: (u.displayName || u.email).split(' ')[0] };
   $('accesso').classList.remove('on');
+  preparaNotifiche();
   stacca = onSnapshot(voci, snap => {
     tutte = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     disegna();
@@ -455,10 +461,17 @@ $('nSalva').onclick = async () => {
     tipo: nTipo, testo: c.testo, data: $('nData').value || '', ora: $('nOra').value || '',
     autore: io.email, autoreNome: io.nome, creato: serverTimestamp(), fatto: false, risposte: []
   };
+  if (voce.tipo === 'impegno' && voce.data) {
+    const t = daIso(voce.data);
+    if (voce.ora) { const [h, m] = voce.ora.split(':').map(Number); t.setHours(h, m); t.setMinutes(t.getMinutes() - 60); }
+    else t.setHours(8, 0);
+    if (t.getTime() > Date.now()) voce.avvisoAt = t.getTime();
+  }
   if (voce.tipo === 'impegno' && !voce.data) { toast('Per un impegno serve il giorno'); return; }
   $('nSalva').disabled = true;
   try {
-    await addDoc(voci, voce);
+    const rif = await addDoc(voci, voce);
+    avvisa(rif.id, 'nuova');
     chiudiFoglio();
     toast(voce.tipo === 'domanda' ? 'Domanda inviata' : 'Attaccato al frigo');
     if (voce.data) { giornoSel = voce.data; const d = daIso(voce.data); meseVisto = new Date(d.getFullYear(), d.getMonth(), 1); disegna(); }
@@ -496,8 +509,41 @@ function corpoDettaglio() {
 }
 async function rispondi(testo) {
   await updateDoc(doc(db, 'voci', dId), { risposte: arrayUnion({ email: io.email, nome: io.nome, testo, quando: Date.now() }) });
+  avvisa(dId, 'risposta');
   toast('Risposta inviata'); chiudiFoglio();
 }
+
+/* ---------- notifiche ---------- */
+const notificheOk = () => 'Notification' in window && Notification.permission === 'granted';
+async function preparaNotifiche() {
+  if (!('Notification' in window) || !(await isSupported())) return;
+  $('btnCampana').hidden = notificheOk();
+  if (notificheOk()) registraTelefono();
+}
+$('btnCampana').onclick = async () => {
+  const p = await Notification.requestPermission();
+  if (p === 'granted') { $('btnCampana').hidden = true; toast('Notifiche attive'); registraTelefono(); }
+  else toast('Notifiche bloccate: riattivale dalle impostazioni dell\'app');
+};
+async function registraTelefono() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const token = await getToken(getMessaging(fb), { vapidKey: VAPID, serviceWorkerRegistration: reg });
+    if (token) await setDoc(doc(db, 'dispositivi', token), { token, email: io.email, nome: io.nome, agg: serverTimestamp() });
+  } catch (e) { console.warn('Notifiche non registrate', e); }
+}
+async function avvisa(id, evento) {
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    await fetch(WORKER, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, id, evento }) });
+  } catch (e) { console.warn('Avviso non inviato', e); }
+}
+// aprendo l'app pulisco la tendina
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !navigator.serviceWorker) return;
+  const reg = await navigator.serviceWorker.getRegistration();
+  (await reg?.getNotifications() || []).forEach(n => n.close());
+});
 
 /* ---------- extra ---------- */
 function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2200); }
