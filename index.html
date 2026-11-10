@@ -225,7 +225,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.2.3';
+const VERSIONE = 'v0.2.4';
 // Notifiche: da compilare
 const VAPID = 'BOwgCIEwbSvOif9lH_KJxnd9ctALyRjmquTQa1_gP9Su3QzJCT0fqVXbQF7DBs3AnLPgODxee2UI4Etpv_gjDhs';
 const WORKER = 'https://rigordati.wolve666.workers.dev';
@@ -457,7 +457,11 @@ function apriNuovo(d) {
 }
 const foglioDelGiorno = () => attuale() === 'v-cal' && giornoSel !== iso(oggi()) ? giornoSel : '';
 function aggiornaTipo(t) { nTipo = t; document.querySelectorAll('#nTipi button').forEach(b => b.classList.toggle('sel', b.dataset.t === t)); }
-document.querySelectorAll('#nTipi button').forEach(b => b.onclick = () => { tipoScelto = true; aggiornaTipo(b.dataset.t); });
+document.querySelectorAll('#nTipi button').forEach(b => b.onclick = () => {
+  tipoScelto = true; aggiornaTipo(b.dataset.t);
+  // Domanda con il testo già scritto: parte subito
+  if (b.dataset.t === 'domanda' && $('nTesto').value.trim() && !$('nSalva').disabled) $('nSalva').click();
+});
 $('nData').oninput = $('nOra').oninput = () => dataScelta = true;
 $('nTesto').oninput = () => {
   const t = $('nTesto').value; $('nSalva').disabled = !t.trim();
