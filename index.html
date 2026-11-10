@@ -225,7 +225,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.2.1';
+const VERSIONE = 'v0.2.2';
 // Notifiche: da compilare
 const VAPID = 'BOwgCIEwbSvOif9lH_KJxnd9ctALyRjmquTQa1_gP9Su3QzJCT0fqVXbQF7DBs3AnLPgODxee2UI4Etpv_gjDhs';
 const WORKER = 'https://rigordati.wolve666.workers.dev';
@@ -241,7 +241,7 @@ const firebaseConfig = {
 };
 const fb = initializeApp(firebaseConfig);
 const auth = getAuth(fb);
-const db = initializeFirestore(fb, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+const db = initializeFirestore(fb, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }), experimentalAutoDetectLongPolling: true });
 const voci = collection(db, 'voci');
 
 const $ = id => document.getElementById(id);
@@ -522,6 +522,7 @@ async function rispondi(testo) {
 }
 
 /* ---------- notifiche ---------- */
+let mioToken = null;
 const notificheOk = () => 'Notification' in window && Notification.permission === 'granted';
 async function preparaNotifiche() {
   if (!('Notification' in window) || !(await isSupported())) return;
@@ -537,13 +538,14 @@ async function registraTelefono() {
   try {
     const reg = await navigator.serviceWorker.ready;
     const token = await getToken(getMessaging(fb), { vapidKey: VAPID, serviceWorkerRegistration: reg });
+    mioToken = token;
     if (token) await setDoc(doc(db, 'dispositivi', token), { token, email: io.email, nome: io.nome, agg: serverTimestamp() });
   } catch (e) { console.warn('Notifiche non registrate', e); }
 }
 async function avvisa(id, evento) {
   try {
     const idToken = await auth.currentUser.getIdToken();
-    await fetch(WORKER, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, id, evento }) });
+    await fetch(WORKER, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, id, evento, mioToken }) });
   } catch (e) { console.warn('Avviso non inviato', e); }
 }
 // aprendo l'app pulisco la tendina
