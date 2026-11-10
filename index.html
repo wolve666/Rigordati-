@@ -225,7 +225,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.2.2';
+const VERSIONE = 'v0.2.3';
 // Notifiche: da compilare
 const VAPID = 'BOwgCIEwbSvOif9lH_KJxnd9ctALyRjmquTQa1_gP9Su3QzJCT0fqVXbQF7DBs3AnLPgODxee2UI4Etpv_gjDhs';
 const WORKER = 'https://rigordati.wolve666.workers.dev';
@@ -359,7 +359,7 @@ function disegnaMese() {
     const b = document.createElement('button');
     b.className = 'giorno' + (d.getMonth() !== meseVisto.getMonth() ? ' fuori' : '') + (s === oggiS ? ' oggi' : '') + (s === giornoSel ? ' sel' : '');
     b.innerHTML = `${d.getDate()}<span class="pallini">${tipi.map(t => `<i class="p-${t}"></i>`).join('')}</span>`;
-    b.onclick = () => { giornoSel = s; if (d.getMonth() !== meseVisto.getMonth()) { meseVisto = new Date(d.getFullYear(), d.getMonth(), 1); } disegna(); };
+    b.onclick = () => { if (s === giornoSel) { apriNuovo(s); return; } giornoSel = s; if (d.getMonth() !== meseVisto.getMonth()) { meseVisto = new Date(d.getFullYear(), d.getMonth(), 1); } disegna(); };
     g.appendChild(b);
   }
 }
@@ -446,12 +446,15 @@ window.addEventListener('popstate', () => {
 
 /* ---------- nuovo ---------- */
 let nTipo = 'todo', tipoScelto = false, dataScelta = false;
-$('btnNuovo').onclick = () => {
-  $('nTesto').value = ''; $('nData').value = foglioDelGiorno(); $('nOra').value = '';
+let dataPre = '';
+$('btnNuovo').onclick = () => apriNuovo(foglioDelGiorno());
+function apriNuovo(d) {
+  dataPre = d;
+  $('nTesto').value = ''; $('nData').value = d; $('nOra').value = '';
   tipoScelto = false; dataScelta = false; aggiornaTipo('todo'); $('nSalva').disabled = true;
   $('nNota').textContent = 'Scrivi come lo diresti: giorno e ora li capisco da solo.';
   apriFoglio('fNuovo'); setTimeout(() => $('nTesto').focus(), 300);
-};
+}
 const foglioDelGiorno = () => attuale() === 'v-cal' && giornoSel !== iso(oggi()) ? giornoSel : '';
 function aggiornaTipo(t) { nTipo = t; document.querySelectorAll('#nTipi button').forEach(b => b.classList.toggle('sel', b.dataset.t === t)); }
 document.querySelectorAll('#nTipi button').forEach(b => b.onclick = () => { tipoScelto = true; aggiornaTipo(b.dataset.t); });
@@ -460,7 +463,7 @@ $('nTesto').oninput = () => {
   const t = $('nTesto').value; $('nSalva').disabled = !t.trim();
   const c = capisci(t);
   if (!tipoScelto) aggiornaTipo(c.tipo);
-  if (!dataScelta) { $('nData').value = c.data || foglioDelGiorno(); $('nOra').value = c.ora; }
+  if (!dataScelta) { $('nData').value = c.data || dataPre; $('nOra').value = c.ora; }
   $('nNota').textContent = (c.data || c.ora) ? `Ho capito: ${c.data ? bella(c.data) : ''} ${c.ora ? 'alle ' + c.ora : ''}`.trim() : 'Scrivi come lo diresti: giorno e ora li capisco da solo.';
 };
 $('nSalva').onclick = async () => {
@@ -545,8 +548,12 @@ async function registraTelefono() {
 async function avvisa(id, evento) {
   try {
     const idToken = await auth.currentUser.getIdToken();
-    await fetch(WORKER, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, id, evento, mioToken }) });
-  } catch (e) { console.warn('Avviso non inviato', e); }
+    const r = await fetch(WORKER, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, id, evento, mioToken }) });
+    const j = await r.json();
+    if (!j.ok) toast('Postino: ' + j.errore);
+    else if (!j.inviati) toast('Nessun altro dispositivo ha le notifiche attive');
+    else toast(`Notifica inviata a ${j.inviati} dispositiv${j.inviati > 1 ? 'i' : 'o'}`);
+  } catch (e) { toast('Postino non raggiungibile: ' + e.message); }
 }
 // aprendo l'app pulisco la tendina
 document.addEventListener('visibilitychange', async () => {
