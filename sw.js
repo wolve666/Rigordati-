@@ -1,5 +1,5 @@
-const CACHE = 'rigordati-v0.2.5';
-const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png'];
+const CACHE = 'rigordati-v0.2.6';
+const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png', './badge-96.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
@@ -32,7 +32,7 @@ self.addEventListener('push', e => {
   if (!d.tag) d.tag = 'rigordati-' + Date.now();
   e.waitUntil((async () => {
     await self.registration.showNotification(d.titolo || 'Rigordati!!', {
-      body: d.corpo || '', tag: d.tag, icon: 'icon-192.png', badge: 'icon-192.png', renotify: true
+      body: d.corpo || '', tag: d.tag, icon: 'icon-192.png', badge: 'badge-96.png', renotify: true
     });
     const tutte = await self.registration.getNotifications();
     if (self.navigator.setAppBadge) self.navigator.setAppBadge(tutte.length).catch(() => {});
