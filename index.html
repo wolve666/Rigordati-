@@ -34,7 +34,7 @@ header{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
 .tira{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));width:46px;height:46px;margin-left:-23px;border-radius:50%;background:var(--carta);box-shadow:0 3px 0 #9fc4cc;display:grid;place-items:center;font-size:1.5rem;z-index:8;transform:translateY(-80px);opacity:0}
 .tira.gira{animation:gira .8s linear infinite}
 @keyframes gira{to{rotate:360deg}}
-.ver{font-size:.75rem;color:var(--ink-soft);background:var(--carta);border-radius:10px;padding:2px 7px;align-self:flex-end;margin-bottom:6px}
+.ver{cursor:pointer;font-size:.75rem;color:var(--ink-soft);background:var(--carta);border-radius:10px;padding:2px 7px;align-self:flex-end;margin-bottom:6px}
 header .sp{flex:1}
 .btn-ico{border:0;background:var(--carta);color:var(--ink);width:40px;height:40px;border-radius:50%;font-size:1.1rem;box-shadow:0 2px 0 #9fc4cc;cursor:pointer;display:grid;place-items:center}
 .btn-ico:active{transform:translateY(2px);box-shadow:none}
@@ -225,7 +225,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.2.4';
+const VERSIONE = 'v0.2.5';
 // Notifiche: da compilare
 const VAPID = 'BOwgCIEwbSvOif9lH_KJxnd9ctALyRjmquTQa1_gP9Su3QzJCT0fqVXbQF7DBs3AnLPgODxee2UI4Etpv_gjDhs';
 const WORKER = 'https://rigordati.wolve666.workers.dev';
@@ -570,6 +570,13 @@ document.addEventListener('visibilitychange', async () => {
 let syncMsg = 'In collegamento…';
 function statoSync(cls, msg) { $('sync').className = 'sync ' + cls; syncMsg = msg; }
 $('sync').onclick = () => toast(syncMsg);
+// tocco sulla versione: notifica di prova locale
+$('ver').onclick = async () => {
+  if (!notificheOk()) { toast('Prima attiva le notifiche con la campanella'); return; }
+  const reg = await navigator.serviceWorker.ready;
+  await reg.showNotification('Prova di Rigordati!!', { body: 'Se mi vedi nella tendina, Android è a posto', tag: 'prova', icon: 'icon-192.png' });
+  toast('Notifica di prova creata');
+};
 
 /* ---------- trascina giù per aggiornare ---------- */
 (() => {
