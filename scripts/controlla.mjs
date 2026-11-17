@@ -9,7 +9,7 @@ const bene = m => console.log('✓ ' + m);
 const avviso = m => console.log('! ' + m);
 
 // 1. sintassi
-const js = ['sw.js', ...['js', 'worker', 'scripts', 'test', 'test/e2e', 'test/regole'].flatMap(d =>
+const js = ['sw.js', 'ricordiamoci/sw.js', ...['js', 'worker', 'scripts', 'test', 'test/e2e', 'test/regole', 'ricordiamoci/js', 'ricordiamoci/js/nucleo', 'ricordiamoci/test', 'ricordiamoci/test/e2e'].flatMap(d =>
   existsSync(d) ? readdirSync(d).filter(f => /\.(m?js)$/.test(f)).map(f => `${d}/${f}`) : [])];
 for (const f of js) {
   try { execFileSync(process.execPath, ['--check', f], { stdio: 'pipe' }); }
