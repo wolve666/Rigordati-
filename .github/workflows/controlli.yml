@@ -1,0 +1,44 @@
+name: Controlli
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  base:
+    name: Test e controlli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run controlla
+      - run: npm test
+
+  regole:
+    name: Regole Firestore (emulatore)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run test:regole
+
+  app:
+    name: App nel browser (Firebase finto)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright-core@1.49.1
+      # Usa il Chrome già presente sulle macchine di GitHub, senza scaricare browser.
+      - run: CANALE=chrome PLAYWRIGHT=playwright-core npm run test:app

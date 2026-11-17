@@ -1,0 +1,87 @@
+rules_version = '2';
+// Regole di Rigordati!!: ogni famiglia vede solo le sue voci.
+// Da incollare in Firebase → Firestore → Regole (oppure `firebase deploy --only firestore:rules`).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function entrato() { return request.auth != null; }
+    function io() { return request.auth.uid; }
+    function famiglia(fid) { return get(/databases/$(database)/documents/famiglie/$(fid)).data; }
+    function membro(fid) { return entrato() && io() in famiglia(fid).membri; }
+    function cambiaSolo(campi) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campi); }
+    function testo(s, max) { return s is string && s.size() <= max; }
+
+    // Profilo personale: l'elenco delle mie famiglie.
+    match /utenti/{uid} {
+      allow read, write: if entrato() && io() == uid;
+    }
+
+    match /famiglie/{fid} {
+      allow read: if entrato() && io() in resource.data.membri;
+
+      allow create: if entrato()
+        && request.resource.data.membri == [io()]
+        && testo(request.resource.data.nome, 60);
+
+      allow update: if entrato() && (
+        // un membro rinomina la famiglia o il proprio nome
+        (io() in resource.data.membri
+          && request.resource.data.membri == resource.data.membri
+          && cambiaSolo(['nome', 'nomi'])
+          && testo(request.resource.data.nome, 60))
+        // un membro esce dalla famiglia
+        || (io() in resource.data.membri
+          && request.resource.data.membri.toSet() == resource.data.membri.toSet().difference([io()].toSet())
+          && cambiaSolo(['membri', 'nomi']))
+        // qualcuno entra con un codice d'invito valido
+        || (!(io() in resource.data.membri)
+          && request.resource.data.membri.toSet() == resource.data.membri.toSet().union([io()].toSet())
+          && request.resource.data.membri.size() == resource.data.membri.size() + 1
+          && cambiaSolo(['membri', 'nomi', 'invito'])
+          && invitoValido(fid, request.resource.data.invito))
+      );
+
+      function invitoValido(fid, codice) {
+        let inv = get(/databases/$(database)/documents/inviti/$(codice)).data;
+        return inv.famiglia == fid && inv.scade > request.time;
+      }
+
+      match /voci/{vid} {
+        allow read: if membro(fid);
+        allow create: if membro(fid)
+          && request.resource.data.famiglia == fid
+          // autore = chi scrive (le voci portate dalla v0.2 conservano l'autore originale)
+          && (request.resource.data.autoreUid == io() || request.resource.data.migrata == true)
+          && request.resource.data.tipo in ['impegno', 'domanda', 'todo']
+          && testo(request.resource.data.testo, 500);
+        allow update: if membro(fid)
+          && request.resource.data.famiglia == fid
+          && request.resource.data.tipo in ['impegno', 'domanda', 'todo']
+          && testo(request.resource.data.testo, 500);
+        allow delete: if membro(fid);
+      }
+    }
+
+    // Codici d'invito: si leggono solo conoscendo il codice (niente elenco).
+    match /inviti/{codice} {
+      allow get: if entrato();
+      allow create: if membro(request.resource.data.famiglia) && request.resource.data.da == io();
+      allow delete: if entrato() && resource.data.da == io();
+    }
+
+    // Telefoni con le notifiche attive. Li legge solo il Worker (con l'account di servizio).
+    match /dispositivi/{token} {
+      allow create, update: if entrato() && request.resource.data.uid == io();
+      allow delete: if entrato() && resource.data.uid == io();
+    }
+
+    // ----- Transizione dalla v0.2: la vecchia collezione comune, solo per la migrazione. -----
+    // Sostituire le email con quelle vere; dopo la migrazione questo blocco si può togliere.
+    match /voci/{vid} {
+      allow read, write: if entrato() && request.auth.token.email in ['EMAIL_1', 'EMAIL_2'];
+    }
+    match /migrazione/{doc} {
+      allow read, write: if entrato() && request.auth.token.email in ['EMAIL_1', 'EMAIL_2'];
+    }
+  }
+}

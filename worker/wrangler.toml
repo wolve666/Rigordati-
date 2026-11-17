@@ -1,0 +1,12 @@
+# Per pubblicare il Worker da riga di comando (facoltativo: in alternativa si incolla
+# cloudflare-worker.js nell'editor di Cloudflare). I segreti SA_JSON e API_KEY si impostano
+# con `npx wrangler secret put NOME` oppure dal pannello.
+name = "rigordati"
+main = "cloudflare-worker.js"
+compatibility_date = "2025-06-01"
+
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+ORIGINE = "https://wolve666.github.io"

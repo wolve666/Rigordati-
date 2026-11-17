@@ -1,0 +1,18 @@
+{
+  "name": "rigordati",
+  "private": true,
+  "type": "module",
+  "description": "Calendario condiviso di famiglia (PWA). Nessuna dipendenza: l'app gira così com'è su GitHub Pages.",
+  "scripts": {
+    "test": "TZ=Europe/Rome node --test test/*.test.mjs",
+    "controlla": "node scripts/controlla.mjs",
+    "worker": "node scripts/costruisci-worker.mjs",
+    "test:regole": "firebase emulators:exec --only firestore --project rigordati-prova \"node --test test/regole/*.test.mjs\"",
+    "test:app": "node test/e2e/prova-app.mjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "firebase": "^10.12.2",
+    "firebase-tools": "^13.29.0"
+  }
+}
