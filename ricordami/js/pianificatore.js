@@ -45,8 +45,9 @@ export function riepiloghi(lista, cfg, da, adesso) {
  * Trova gli avvisi dovuti e li passa a `mostra`. Non ripete mai lo stesso avviso.
  * @returns {Promise<{mostrati:number, prossimo:number|null, bollino:number}>}
  */
-export async function controlla(archivio, mostra, adesso = Date.now()) {
-  const [lista, cfg, giaFatti] = await Promise.all([archivio.promemoria(), archivio.impostazioni(), archivio.leggiMeta('notificati')]);
+export async function controlla(archivio, mostra, adesso = Date.now(), filtro = () => true) {
+  const [tutti, cfg, giaFatti] = await Promise.all([archivio.promemoria(), archivio.impostazioni(), archivio.leggiMeta('notificati')]);
+  const lista = tutti.filter(filtro);
   const visti = new Set(giaFatti || []);
   const ultimo = await archivio.leggiMeta('ultimoControllo');
   // Al primo controllo in assoluto non recupero niente: l'app è appena stata installata.

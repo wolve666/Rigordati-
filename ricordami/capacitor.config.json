@@ -2,13 +2,17 @@
   "appId": "app.ricordami",
   "appName": "RicordaMi",
   "webDir": "www",
-  "android": {
-    "adjustMarginsForEdgeToEdge": "force"
-  },
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_ricordami",
       "iconColor": "#F2577A"
+    },
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover"
     }
+  },
+  "android": {
+    "allowMixedContent": true
   }
 }

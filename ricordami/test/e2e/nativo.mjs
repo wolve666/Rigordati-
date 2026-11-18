@@ -32,11 +32,16 @@ const FINTO = () => {
     if (metodo === 'writeFile') return { uri: 'file:///cache/' + arg.path };
     return {};
   } });
-  const nomi = ['LocalNotifications', 'Condivisione', 'Badge', 'Haptics', 'StatusBar', 'Filesystem', 'Share'];
+  const nomi = ['LocalNotifications', 'Condivisione', 'Badge', 'Haptics', 'SystemBars', 'App', 'Filesystem', 'Share'];
   const Plugins = Object.fromEntries(nomi.map(n => [n, plugin(n)]));
   // addListener vero: conservo la funzione per poter simulare gli eventi
   for (const n of nomi) Plugins[n].addListener = async (evento, fn) => { (ascolti[`${n}.${evento}`] ||= []).push(fn); return { remove() {} }; };
   window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android', Plugins };
+  // Come fa Capacitor su un telefono con la barra a 3 tasti: 24px in alto, 48px in basso.
+  addEventListener('DOMContentLoaded', () => {
+    document.documentElement.style.setProperty('--safe-area-inset-top', '24px');
+    document.documentElement.style.setProperty('--safe-area-inset-bottom', '48px');
+  });
 };
 
 const browser = await chromium.launch(process.env.CANALE ? { channel: process.env.CANALE } : {});
@@ -61,7 +66,7 @@ await page.waitForFunction(() => (window.__programmate || []).length > 0, null, 
 
 assert.equal((await chiamate('LocalNotifications', 'requestPermissions')).length, 1, 'chiede il permesso');
 const canali = (await chiamate('LocalNotifications', 'createChannel')).map(c => c.arg.id);
-assert.deepEqual(canali, ['promemoria', 'insistenti', 'riepiloghi']);
+assert.deepEqual(canali, ['promemoria', 'insistenti', 'famiglia', 'riepiloghi']);
 const azioni = (await chiamate('LocalNotifications', 'registerActionTypes'))[0].arg.types[0].actions.map(a => a.id);
 assert.deepEqual(azioni, ['fatto', 'rinvia']);
 passo('primo avvio: permesso, canali di notifica, azioni Fatto / Tra 10 min');
@@ -79,7 +84,7 @@ passo(`${prog.length} avvisi programmati nel sistema per i prossimi 14 giorni (o
 
 const bol = await chiamate('Badge', 'set');
 assert.ok(bol.length && bol.at(-1).arg.count >= 1, 'bollino sull\'icona');
-assert.ok((await chiamate('StatusBar', 'setStyle')).length, 'barra di stato del colore del tema');
+assert.ok((await chiamate('SystemBars', 'setStyle')).length, 'icone di sistema chiare/scure secondo il tema');
 passo(`bollino sull'icona: ${bol.at(-1).arg.count}; barra di stato intonata al tema`);
 
 // Tocco "Fatto" sulla notifica della palestra
@@ -94,8 +99,27 @@ await page.evaluate(n => window.__ascolti['LocalNotifications.localNotificationA
 await page.waitForFunction(() => (window.__programmate || []).some(n => Math.abs(new Date(n.schedule.at) - Date.now() - 600e3) < 5000), null, { timeout: 5000 });
 passo('"⏰ Tra 10 min" dalla notifica: riprogrammato fra 10 minuti');
 
+// Barra dell'app ancorata, con la fascia separata per i tasti di Android
+const barra = await page.locator('.barra').boundingBox();
+assert.equal(Math.round(barra.y + barra.height), 844, 'barra ancorata al fondo');
+const fascia = await page.evaluate(() => { const s = getComputedStyle(document.querySelector('.barra'), '::after'); return { h: s.height, bg: s.backgroundColor }; });
+assert.equal(fascia.h, '48px');
+await page.screenshot({ path: process.env.FOTO_NATIVO || '/dev/null' }).catch(() => {});
+passo(`barra dell'app ancorata, fascia di sistema separata (${fascia.bg})`);
+
+// Tasto indietro di Android: chiude, torna al calendario, poi esce
+const indietro = () => page.evaluate(() => window.__ascolti['App.backButton'][0]());
+await page.click('.tab[data-v="v-liste"]');
+await page.click('#btnNuovo'); await page.locator('#fScheda.on').waitFor();
+await indietro(); await page.waitForFunction(() => !document.getElementById('fScheda').classList.contains('on'));
+await indietro(); await page.locator('#v-cal.attiva').waitFor();
+assert.equal((await chiamate('App', 'exitApp')).length, 0);
+await indietro();
+assert.equal((await chiamate('App', 'exitApp')).length, 1, 'dal calendario si esce');
+passo('tasto indietro: chiude la finestra, torna al calendario, poi esce dall\'app');
+
 // Avviso di prova dalle impostazioni
-await page.click('.tab[data-v="v-imp"]');
+await page.click('#btnImp');
 assert.match(await page.locator('#v-imp').innerText(), /ora esatta anche ad app chiusa/);
 await page.click('#iProva');
 assert.ok((await chiamate('LocalNotifications', 'schedule')).some(c => c.arg.notifications[0].id === 1), 'avviso di prova');

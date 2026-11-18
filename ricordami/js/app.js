@@ -8,6 +8,20 @@ import { agenda, inRitardo, dataNelFuso, piuGiorni, giornoSettimana, istante, fa
 import { controlla, bollino, prossimo } from './pianificatore.js';
 import { esportaIcs } from './ics.js';
 import * as N from './nativo.js';
+import { famiglia, fraseEvento } from './famiglia.js';
+
+/* ---------- chi è chi (famiglia) ---------- */
+const ioId = () => famiglia.io?.id;
+const perMe = p => !p.gruppo || !p.perChi?.length || p.perChi.includes(ioId());
+const mio = p => !p.gruppo || !p.autore || p.autore.id === ioId();
+const haRisposto = p => (p.risposte || []).some(r => r.uid === ioId());
+const inAttesa = p => p.tipo === 'domanda' && !!p.gruppo && !mio(p) && perMe(p) && !haRisposto(p);
+const perAvvisi = p => perMe(p) && p.tipo !== 'domanda';
+const nomeMembro = (g, uid) => uid === ioId() ? 'te' : famiglia.membro(g, uid)?.nome || '?';
+const iniziale = n => (n || '?').trim().charAt(0).toUpperCase();
+const avatar = (g, uid, cls = '') => { const m = famiglia.membro(g, uid); return `<span class="avatar ${cls}" style="background:var(--c-${m?.colore || 'lilla'})">${esc(iniziale(m?.nome))}</span>`; };
+let gruppoAperto = null; // gruppo mostrato nella scheda Famiglia
+let invitoMostrato = null; // { g, codice } ultimo codice creato
 
 /* ---------- utilità ---------- */
 const $ = id => document.getElementById(id);
@@ -17,7 +31,8 @@ const SEGNI = (dim = 84) => `<svg class="segni" width="${dim}" height="${dim}" f
 const animazioni = () => document.documentElement.dataset.animazioni !== 'ridotte' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
 const GSETT = ['D', 'L', 'M', 'M', 'G', 'V', 'S'];
 
-let lista = [], liste = [], cfg = {}, vista = 'v-oggi', listaAperta = null, ricerca = '';
+const CASA = 'v-cal'; // la prima pagina
+let lista = [], liste = [], cfg = {}, vista = CASA, listaAperta = null, ricerca = '';
 let calMese = null, calGiorno = null;
 const adesso = () => Date.now();
 const oggiIso = () => dataNelFuso(adesso(), cfg.fuso);
@@ -75,7 +90,7 @@ let timerProgramma = null;
 function riprogramma() {
   if (!N.nativo || !cfg.profilo) return;
   clearTimeout(timerProgramma);
-  timerProgramma = setTimeout(() => N.programma(lista, cfg).catch(e => console.warn('Avvisi non programmati', e)), 300);
+  timerProgramma = setTimeout(() => N.programma(lista.filter(perAvvisi), cfg).catch(e => console.warn('Avvisi non programmati', e)), 300);
 }
 let permessoNativo = null;
 
@@ -89,10 +104,37 @@ function vaiA(v, storia = true) {
     disegna();
     $('contenuto').scrollTop = 0;
   };
-  if (storia && v !== 'v-oggi') history.pushState({ v }, '');
   cambia();
+  aggiornaStoria();
 }
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => { listaAperta = null; vaiA(t.dataset.v); });
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => { listaAperta = null; chiudiRicerca(); vaiA(t.dataset.v); });
+$('btnImp').onclick = () => { listaAperta = null; chiudiRicerca(); vaiA('v-imp'); };
+
+/* ---------- tasto indietro ----------
+   Una sola regola per Android e per il browser: chiude il foglio aperto, poi la ricerca,
+   poi la lista aperta, poi torna al calendario. Dal calendario: si esce dall'app. */
+function indietro() {
+  if (foglio) { chiudiFoglio(); return true; }
+  if ($('banner').classList.contains('on')) { $('banner').classList.remove('on'); return true; }
+  if (!$('cercaBox').hidden) { chiudiRicerca(); vaiA(vistaPrimaDiCercare === 'v-cerca' ? CASA : vistaPrimaDiCercare); return true; }
+  if (listaAperta) { listaAperta = null; disegna(); aggiornaStoria(); return true; }
+  if (vista !== CASA) { vaiA(CASA); return true; }
+  return false;
+}
+const allaRadice = () => !foglio && $('cercaBox').hidden && !listaAperta && vista === CASA;
+// Nel browser tengo al massimo UN passo di cronologia "di guardia", così Indietro non si perde mai.
+let ignoraPop = false;
+function aggiornaStoria() {
+  if (N.nativo) return;
+  const guardia = history.state?.guardia;
+  if (!allaRadice() && !guardia) history.pushState({ guardia: 1 }, '');
+  else if (allaRadice() && guardia) { ignoraPop = true; history.back(); }
+}
+window.addEventListener('popstate', () => {
+  if (ignoraPop) { ignoraPop = false; return; }
+  indietro();
+  aggiornaStoria();
+});
 
 function disegna() {
   if (!cfg.fuso) return;
@@ -100,7 +142,10 @@ function disegna() {
   $('titolo').textContent = listaAperta ? `${listaDi(listaAperta)?.emoji || ''} ${listaDi(listaAperta)?.nome || ''}` : v.dataset.titolo;
   const o = new Date();
   $('sopratitolo').textContent = `${GIORNI_BELLI[o.getDay()]} ${o.getDate()} ${MESI[o.getMonth()]}`;
-  ({ 'v-oggi': vistaOggi, 'v-cal': vistaCalendario, 'v-liste': vistaListe, 'v-imp': vistaImpostazioni, 'v-cerca': vistaCerca })[vista]();
+  const nAttesa = lista.filter(inAttesa).length;
+  $('bollinoFam').hidden = !nAttesa; $('bollinoFam').textContent = nAttesa;
+  $('tabFamNome').textContent = famiglia.gruppi.length === 1 ? famiglia.gruppi[0].nome.slice(0, 12) : 'Famiglia';
+  ({ 'v-oggi': vistaOggi, 'v-cal': vistaCalendario, 'v-fam': vistaFamiglia, 'v-liste': vistaListe, 'v-imp': vistaImpostazioni, 'v-cerca': vistaCerca })[vista]();
   aggiornaBollino();
 }
 
@@ -117,16 +162,27 @@ function riga(x, { mostraGiorno = false } = {}) {
   if (p.insisti) meta.push(`<span title="Insiste finché non è fatto">${icona('insisti')}</span>`);
   if (p.lista && listaDi(p.lista) && listaAperta !== p.lista) meta.push(`<span>${listaDi(p.lista).emoji} ${esc(listaDi(p.lista).nome)}</span>`);
   if (p.note) meta.push(`<span>${icona('nota')}</span>`);
+  if (p.gruppo) {
+    if (p.perChi?.length) meta.push(`<span class="pill per">per ${esc(p.perChi.map(u => nomeMembro(p.gruppo, u)).join(', '))}</span>`);
+    if (!mio(p)) meta.push(`<span>da ${esc(p.autore?.nome || '?')}</span>`);
+    else if (!p.perChi?.length) meta.push(`<span>👪 ${esc(famiglia.gruppo(p.gruppo)?.nome || '')}</span>`);
+    if (p.tipo === 'domanda') {
+      const r = p.risposte || [];
+      if (inAttesa(p)) meta.push('<span class="pill attesa">Rispondi tu</span>');
+      else if (!r.length) meta.push('<span>in attesa di risposta</span>');
+      else meta.push(`<span class="pill esito">${esc(r.at(-1).nome)}: ${esc(r.at(-1).testo)}</span>`);
+    }
+  }
   const flag = p.priorita ? `<span class="bandiera p${p.priorita}">${p.priorita === 2 ? '!!' : '!'}</span> ` : '';
   let coda = '';
-  if (x.scad && !x.fatto) {
+  if (x.scad && !x.fatto && p.tipo !== 'domanda') {
     const m = (x.scad - adesso()) / 60000;
     coda = `<span class="conto ${tardi ? 'tardi' : m < 120 ? 'vicino' : ''}">${conto(x.scad)}</span>`;
   }
   return `<div class="riga-guscio" data-id="${esc(p.id)}" data-occ="${esc(occ)}">
     <div class="riga-sotto"><span>${icona('ok')} Fatto</span><span>Rimanda ${icona('ora')}</span></div>
     <div class="riga ${x.fatto ? 'fatto' : ''} ${p.priorita === 2 ? 'p2' : ''}" style="--colore-lista:${p.lista ? colore(p.lista) : 'transparent'}">
-      <button class="spunta" aria-label="${x.fatto ? 'Da fare' : 'Fatto'}">${icona('ok')}</button>
+      ${p.tipo === 'domanda' ? '<span class="spunta domanda" aria-hidden="true">💬</span>' : `<button class="spunta" aria-label="${x.fatto ? 'Da fare' : 'Fatto'}">${icona('ok')}</button>`}
       <div class="riga-corpo"><div class="riga-titolo">${flag}${esc(p.titolo)}</div>${meta.length ? `<div class="riga-meta">${meta.join('')}</div>` : ''}</div>
       ${coda}
     </div></div>`;
@@ -149,7 +205,7 @@ function vistaOggi() {
   const dDomani = ag.filter(x => x.occ === dom && !x.fatto);
   const settimana = primaPerVoce(ag.filter(x => x.occ > dom && x.occ <= piuGiorni(o, 7) && !x.fatto));
   const avanti = primaPerVoce(ag.filter(x => x.occ > piuGiorni(o, 7) && !x.fatto));
-  const libere = lista.filter(p => !p.data && !p.fatto).sort((a, b) => (b.priorita || 0) - (a.priorita || 0) || b.creato - a.creato).map(senzaData);
+  const libere = lista.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda').sort((a, b) => (b.priorita || 0) - (a.priorita || 0) || b.creato - a.creato).map(senzaData);
   const restaOggi = dOggi.filter(x => !x.fatto);
   const prox = ag.find(x => !x.fatto && x.scad > ora && x.scad - ora < 7 * 864e5);
 
@@ -229,7 +285,7 @@ function vistaListe() {
       ${gruppo('In programma', fut.map(x => riga(x, { mostraGiorno: true })))}
       ${gruppo('Quando capita', lib.map(x => riga(x)))}
       <button class="btn largo" id="lModifica" style="margin-top:8px">Modifica lista</button>`;
-    $('lIndietro').onclick = () => history.back();
+    $('lIndietro').onclick = () => indietro();
     $('lModifica').onclick = () => apriFoglioLista(listaDi(listaAperta));
     return;
   }
@@ -237,9 +293,116 @@ function vistaListe() {
     const n = attiviDiLista(l.id).n;
     return `<button class="carta-lista" data-l="${esc(l.id)}" style="--colore-lista:var(--c-${l.colore})"><span class="emoji">${esc(l.emoji)}</span><div><b>${esc(l.nome)}</b><br><small>${n ? `${n} da ricordare` : 'Niente in sospeso'}</small></div></button>`;
   }).join('')}<button class="carta-lista nuova" id="lNuova">${icona('piu')}<small>Nuova lista</small></button></div>`;
-  $('v-liste').querySelectorAll('[data-l]').forEach(b => b.onclick = () => { listaAperta = b.dataset.l; history.pushState({ v: 'v-liste', l: listaAperta }, ''); disegna(); $('contenuto').scrollTop = 0; });
+  $('v-liste').querySelectorAll('[data-l]').forEach(b => b.onclick = () => { listaAperta = b.dataset.l; disegna(); aggiornaStoria(); $('contenuto').scrollTop = 0; });
   $('lNuova').onclick = () => apriFoglioLista(null);
 }
+
+function vistaFamiglia() {
+  const el = $('v-fam');
+  if (!famiglia.configurato) {
+    el.innerHTML = `<div class="scheda-fam"><h3>Condividi con la famiglia</h3>
+      <p>Promemoria in comune, domande con risposta Sì / No / Forse, avvisi a chi riguarda: funziona con il servizio online di ${MARCHIO.nome}, in arrivo.</p>
+      <p>Per le prove: indirizzo del servizio (es. <b>http://192.168.1.20:8787</b>).</p>
+      <input class="inserto campo-server" id="fServer" placeholder="https://…" autocomplete="off" autocapitalize="off">
+      <button class="btn primario largo" id="fServerOk">Collega</button></div>`;
+    $('fServerOk').onclick = async () => { const u = $('fServer').value.trim(); if (!/^https?:\/\//.test(u)) return toast('Scrivi un indirizzo che inizia con http'); await famiglia.impostaServer(u); vistaFamiglia(); };
+    return;
+  }
+  if (!famiglia.attivo) {
+    el.innerHTML = `<div class="scheda-fam"><h3>Come ti chiamano?</h3><p>Il nome con cui gli altri ti vedranno nei promemoria e nelle risposte.</p>
+      <input class="inserto" id="fNome" maxlength="30" placeholder="es. Anna" autocomplete="given-name"><button class="btn primario largo" id="fNomeOk">Continua</button></div>`;
+    $('fNomeOk').onclick = () => azioneFam(async () => { const n = $('fNome').value.trim(); if (!n) throw new Error('Scrivi il tuo nome'); await famiglia.registra(n); vistaFamiglia(); });
+    return;
+  }
+  const gruppi = famiglia.gruppi;
+  if (!gruppi.length || gruppoAperto === 'nuovo') {
+    el.innerHTML = `${gruppi.length ? `<button class="indietro" id="fIndietro">${icona('sx')} ${esc(famiglia.gruppo(gruppi[0].id).nome)}</button>` : ''}
+      <div class="scheda-fam"><h3>Entra con un codice</h3><p>Chi ha già creato la famiglia lo trova in Famiglia › Invita.</p>
+        <input class="inserto codice" id="fCodice" maxlength="8" placeholder="ABCD2345" autocomplete="off" autocapitalize="characters" value="${esc(sessionStorage.getItem('invito') || '')}"><button class="btn primario largo" id="fEntra">Entra</button></div>
+      <div class="scheda-fam"><h3>Crea una famiglia</h3><p>Poi inviti gli altri con un codice. Va bene anche per coppia, amici, colleghi.</p>
+        <input class="inserto" id="fNuovo" maxlength="40" value="Famiglia"><button class="btn primario largo" id="fCrea">Crea</button></div>`;
+    if ($('fIndietro')) $('fIndietro').onclick = () => { gruppoAperto = null; vistaFamiglia(); };
+    $('fEntra').onclick = () => azioneFam(async () => {
+      const c = $('fCodice').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (c.length !== 8) throw new Error('Il codice ha 8 caratteri');
+      const g = await famiglia.entra(c); sessionStorage.removeItem('invito'); gruppoAperto = g.id; toast(`Benvenuto in "${g.nome}"!`);
+    });
+    $('fCrea').onclick = () => azioneFam(async () => { const g = await famiglia.creaGruppo($('fNuovo').value.trim() || 'Famiglia'); gruppoAperto = g.id; toast('Fatto! Ora invita gli altri'); });
+    return;
+  }
+  const g = famiglia.gruppo(gruppoAperto) || gruppi[0];
+  gruppoAperto = g.id;
+  const delGruppo = lista.filter(p => p.gruppo === g.id);
+  const domande = delGruppo.filter(p => p.tipo === 'domanda' && !p.fatto).sort((a, b) => b.creato - a.creato);
+  const attesa = domande.filter(inAttesa), altre = domande.filter(p => !inAttesa(p));
+  const o = oggiIso();
+  const prossimi = primaPerVoce(agenda(delGruppo.filter(p => p.tipo !== 'domanda'), o, piuGiorni(o, 30), cfg).filter(x => !x.fatto)).slice(0, 8);
+  const daFare = delGruppo.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda').map(senzaData);
+  const fa = t => { const m = Math.round((adesso() - t) / 60000); return m < 1 ? 'adesso' : m < 60 ? `${m} min fa` : m < 1440 ? `${Math.round(m / 60)} h fa` : giornoBreve(dataNelFuso(t, cfg.fuso)); };
+  const eventi = famiglia.eventi.filter(e => e.gruppo === g.id).slice(-15).reverse();
+  el.innerHTML = `
+    ${gruppi.length > 1 ? `<div class="chips" style="margin-bottom:12px">${gruppi.map(x => `<button class="chip ${x.id === g.id ? 'sel' : ''}" data-g="${esc(x.id)}">${esc(x.nome)}</button>`).join('')}</div>` : ''}
+    <div class="membri-riga">${g.membri.map(m => `<div class="membro">${avatar(g.id, m.id)}<span>${esc(m.id === ioId() ? 'Tu' : m.nome)}</span></div>`).join('')}
+      <button class="membro invita" id="fInvita"><span class="avatar">+</span><span>Invita</span></button></div>
+    <div id="fInvito">${invitoMostrato?.g === g.id ? `<div class="scheda-fam"><h3>Codice d'invito</h3><div class="codice-grande">${invitoMostrato.codice}</div><p style="text-align:center;margin:0">Vale 7 giorni. Chi lo riceve apre ${MARCHIO.nome} › Famiglia › Entra con un codice.</p><button class="btn primario largo" id="fCondividiInvito">Condividi</button></div>` : ''}</div>
+    ${gruppo('Rispondi tu', attesa.map(p => riga(senzaData(p))), 'ritardo')}
+    ${gruppo('Domande', altre.map(p => riga(senzaData(p))))}
+    ${gruppo('In programma insieme', prossimi.map(x => riga(x, { mostraGiorno: true })))}
+    ${gruppo('Da fare insieme', daFare.map(x => riga(x)))}
+    ${!domande.length && !prossimi.length && !daFare.length ? vuoto('Ancora niente in comune', 'Tocca + e scegli "Con chi": ' + esc(g.nome) + '. Con un punto di domanda diventa una domanda.') : ''}
+    ${eventi.length ? `<div class="gruppo"><div class="gruppo-titolo">Attività</div><div class="lista-righe feed">${eventi.map(e => { const f = fraseEvento(e, ioId()); return `<div class="ev">${avatar(g.id, e.da, 'piccolo')}<div><b>${esc(f.titolo)}</b> ${esc(f.corpo)}<small>${fa(e.creato)}</small></div></div>`; }).join('')}</div></div>` : ''}
+    <div class="chips" style="justify-content:center;margin-top:8px"><button class="chip" id="fAltro">+ Altra famiglia o gruppo</button><button class="chip" id="fRinomina">Rinomina</button><button class="chip" id="fEsci">Esci dal gruppo</button></div>`;
+  el.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { gruppoAperto = b.dataset.g; vistaFamiglia(); });
+  $('fInvita').onclick = () => azioneFam(async () => {
+    const { codice } = await famiglia.invita(g.id);
+    invitoMostrato = { g: g.id, codice };
+  });
+  if ($('fCondividiInvito')) $('fCondividiInvito').onclick = () => condividiTesto(`Entra nella famiglia "${g.nome}" su ${MARCHIO.nome} con il codice ${invitoMostrato.codice}`);
+  $('fAltro').onclick = () => { gruppoAperto = 'nuovo'; vistaFamiglia(); };
+  $('fRinomina').onclick = () => azioneFam(async () => { const n = prompt('Nuovo nome del gruppo', g.nome)?.trim(); if (n) await famiglia.rinominaGruppo(g.id, n); });
+  $('fEsci').onclick = () => azioneFam(async () => { if (!confirm(`Uscire da "${g.nome}"? Non vedrai più le sue voci.`)) return; await famiglia.esci(g.id); gruppoAperto = null; toast('Sei uscito dal gruppo'); });
+}
+async function azioneFam(fn) {
+  try { await fn(); await ricarica(); }
+  catch (e) { toast(e.message || 'Non riuscito'); }
+}
+function condividiTesto(t) {
+  if (N.nativo) return N.condividiTesto(t);
+  if (navigator.share) return navigator.share({ text: t }).catch(() => {});
+  navigator.clipboard?.writeText(t).then(() => toast('Copiato: incollalo dove vuoi'), () => toast(t));
+}
+
+/* ---------- domanda: risposte come in Rigordati ---------- */
+let dv = null;
+function apriDomanda(p, origine) {
+  dv = p.id;
+  corpoDomanda();
+  apriFoglio('fDomanda', origine);
+}
+function corpoDomanda() {
+  const p = lista.find(x => x.id === dv); if (!p) return chiudiFoglio();
+  $('dTitolo').textContent = p.titolo;
+  const meta = [];
+  if (p.data) meta.push(`<span>📅 ${giornoBreve(p.data)}${p.ora ? ' · ' + p.ora : ''}</span>`);
+  if (p.perChi?.length) meta.push(`<span class="pill per">per ${esc(p.perChi.map(u => nomeMembro(p.gruppo, u)).join(', '))}</span>`);
+  meta.push(`<span>chiede ${esc(mio(p) ? 'tu' : p.autore?.nome || '?')}</span>`);
+  $('dMeta').innerHTML = meta.join('');
+  const r = p.risposte || [];
+  $('dRisposte').innerHTML = r.length ? r.map(x => `<div class="bolla ${x.uid === ioId() ? 'mia' : ''}"><small>${esc(x.uid === ioId() ? 'Tu' : x.nome)}${x.inAttesa ? ' · invio…' : ''}</small>${esc(x.testo)}</div>`).join('') : '<p class="nota" style="color:var(--tenue)">Ancora nessuna risposta.</p>';
+  $('dRisposte').scrollTop = 1e6;
+  $('dModifica').hidden = !mio(p);
+}
+async function invia(testo) {
+  testo = testo.trim(); if (!testo) return;
+  await famiglia.rispondi(dv, testo);
+  $('dTesto').value = '';
+  N.vibra('leggero');
+  await ricarica(); corpoDomanda();
+}
+$('dRapide').querySelectorAll('button').forEach(b => b.onclick = () => invia(b.dataset.r));
+$('dInvia').onclick = () => invia($('dTesto').value);
+$('dTesto').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); invia($('dTesto').value); } };
+$('dModifica').onclick = () => { const p = lista.find(x => x.id === dv); chiudiFoglio().then(() => apriScheda(p)); };
 
 function vistaCerca() {
   const q = ricerca.trim().toLowerCase();
@@ -294,6 +457,12 @@ function vistaImpostazioni() {
            <div class="voce"><div>🔄 Sincronizzazione<small>Scrivi sul computer, ti avvisa il telefono</small></div><span class="prossimamente">Presto</span></div>`}
     </div>
 
+    <div class="sez">Famiglia</div>
+    <div class="pannello">
+      ${famiglia.attivo ? `<div class="voce cliccabile" id="iMioNome"><div>Il mio nome<small>Come ti vedono gli altri</small></div><b>${esc(famiglia.io.nome)}</b></div>` : ''}
+      <div class="voce"><div>Servizio famiglia<small>${famiglia.configurato ? esc(famiglia.server) : 'Non collegato'}</small></div><button class="btn" id="iServer" style="flex:none;padding:9px 14px">${famiglia.configurato ? 'Cambia' : 'Collega'}</button></div>
+    </div>
+
     <div class="sez">App collegate</div>
     <div class="pannello">
       <div class="voce"><div>💶 Conti<small>Bollette e abbonamenti diventano promemoria da soli</small></div><span class="prossimamente">Presto</span></div>
@@ -329,6 +498,14 @@ function vistaImpostazioni() {
   $('iMattina').onchange = e => cfg.riepilogoMattina && salva({ riepilogoMattina: e.target.value });
   $('iSeraOn').onchange = e => salva({ riepilogoSera: e.target.checked ? $('iSera').value || '21:00' : '' });
   $('iSera').onchange = e => cfg.riepilogoSera && salva({ riepilogoSera: e.target.value });
+  if ($('iMioNome')) $('iMioNome').onclick = () => azioneFam(async () => { const n = prompt('Il tuo nome', famiglia.io.nome)?.trim(); if (n) { await famiglia.rinominami(n); vistaImpostazioni(); } });
+  $('iServer').onclick = () => azioneFam(async () => {
+    const u = prompt('Indirizzo del servizio famiglia', famiglia.server || 'https://')?.trim();
+    if (u === undefined || u === null) return;
+    if (u && !/^https?:\/\//.test(u)) throw new Error('L\'indirizzo deve iniziare con http');
+    if (famiglia.attivo && u !== famiglia.server) await famiglia.esciDaTutto();
+    await famiglia.impostaServer(u); vistaImpostazioni();
+  });
   $('iBollino').onchange = e => salva({ bollino: e.target.checked });
   $('iVibra').onchange = e => salva({ vibrazione: e.target.checked });
   if ($('iPermesso')) $('iPermesso').onclick = async () => { await chiediNotifiche(); vistaImpostazioni(); };
@@ -382,8 +559,9 @@ const contenuto = $('contenuto');
 contenuto.addEventListener('click', e => {
   const g = e.target.closest('.riga-guscio'); if (!g || g.dataset.trascinato) return;
   const p = lista.find(x => x.id === g.dataset.id); if (!p) return;
+  if (p.tipo === 'domanda') return apriDomanda(p, g);
   if (e.target.closest('.spunta')) return segna(p, g.dataset.occ, g, e);
-  apriScheda(p, { occ: g.dataset.occ });
+  apriScheda(p, { occ: g.dataset.occ }, g);
 });
 let trascina = null;
 contenuto.addEventListener('pointerdown', e => {
@@ -443,37 +621,50 @@ function festa(x, y) {
 }
 
 /* ---------- fogli ---------- */
-let foglio = null;
-function apriFoglio(id) {
-  if (foglio && foglio !== id) $(foglio).classList.remove('on');
-  else if (!foglio) history.pushState({ foglio: id }, '');
-  foglio = id; $(id).classList.add('on'); $('velo').classList.add('on');
+let foglio = null, origineFoglio = null;
+// Con un'origine (il +, una riga) il foglio diventa una finestra che si allarga da lì.
+function apriFoglio(id, origine = null) {
+  if (foglio && foglio !== id) $(foglio).classList.remove('on', 'finestra');
+  const f = $(id);
+  foglio = id; origineFoglio = origine;
+  f.classList.toggle('finestra', !!origine);
+  f.classList.add('on'); $('velo').classList.add('on');
+  $('btnNuovo').classList.toggle('aperto', id === 'fScheda');
+  if (origine && animazioni()) cresci(f, origine);
+  aggiornaStoria();
 }
-function chiudiFoglio(daIndietro = false) {
+function cresci(f, origine, chiudi = false) {
+  const o = origine.getBoundingClientRect(), r = f.getBoundingClientRect();
+  if (!o.width) return Promise.resolve();
+  f.style.transformOrigin = `${o.left + o.width / 2 - r.left}px ${o.top + o.height / 2 - r.top}px`;
+  const fotogrammi = [{ transform: 'scale(.04)', opacity: 0, borderRadius: '50%' }, { transform: 'scale(1)', opacity: 1, borderRadius: getComputedStyle(f).borderTopLeftRadius }];
+  return f.animate(chiudi ? fotogrammi.reverse() : fotogrammi, { duration: chiudi ? 240 : 420, easing: chiudi ? 'cubic-bezier(.5,0,.75,0)' : 'cubic-bezier(.2,.9,.25,1.12)' }).finished;
+}
+async function chiudiFoglio() {
   if (!foglio) return;
-  $(foglio).classList.remove('on'); $('velo').classList.remove('on');
-  foglio = null;
-  if (!daIndietro) history.back();
+  const f = $(foglio), origine = origineFoglio;
+  foglio = null; origineFoglio = null;
+  $('velo').classList.remove('on'); $('btnNuovo').classList.remove('aperto');
+  aggiornaStoria();
+  if (origine && f.classList.contains('finestra') && animazioni() && origine.isConnected) await cresci(f, origine, true).catch(() => {});
+  if (foglio !== f.id) f.classList.remove('on', 'finestra');
 }
 $('velo').onclick = () => chiudiFoglio();
-window.addEventListener('popstate', e => {
-  if (foglio) return chiudiFoglio(true);
-  if (listaAperta && !(e.state?.l)) { listaAperta = null; return disegna(); }
-  if (e.state?.v) { listaAperta = e.state.l || null; vaiA(e.state.v, false); return; }
-  if (vista !== 'v-oggi') vaiA('v-oggi', false);
-});
 
 /* ---------- nuovo / modifica ---------- */
 let s = null; // stato della scheda aperta
-function apriScheda(p = null, pre = {}) {
+function apriScheda(p = null, pre = {}, origine = null) {
   s = {
     id: p?.id || null, occ: pre.occ || '', originale: p, scelto: p ? { data: 1, ora: 1, ripeti: 1, priorita: 1, lista: 1 } : {},
     v: {
       titolo: p?.titolo || '', data: p?.data ?? pre.data ?? '', ora: p?.ora ?? pre.ora ?? '', ripeti: p?.ripeti ? { ...p.ripeti } : null,
       avvisi: [...(p?.avvisi ?? cfg.avvisi)], insisti: p?.insisti ?? cfg.insisti, priorita: p?.priorita || 0,
-      lista: p?.lista ?? pre.lista ?? (listaAperta || ''), note: p?.note || '', listaNuova: ''
+      lista: p?.lista ?? pre.lista ?? (listaAperta || ''), note: p?.note || '', listaNuova: '',
+      gruppo: p?.gruppo ?? pre.gruppo ?? (vista === 'v-fam' && famiglia.gruppo(gruppoAperto) ? gruppoAperto : ''),
+      perChi: [...(p?.perChi || [])], tipo: p?.tipo || 'promemoria'
     }
   };
+  if (p) s.scelto.tipo = 1;
   if (pre.data || pre.ora) Object.assign(s.scelto, { data: 1, ora: 1 });
   $('sIntestazione').textContent = p ? 'Modifica' : 'Nuovo promemoria';
   $('sTesto').value = p ? p.titolo : pre.testo || '';
@@ -482,11 +673,11 @@ function apriScheda(p = null, pre = {}) {
   $('sSalva').textContent = p ? 'Salva' : 'Ricordamelo';
   $('sDettagli').hidden = !p; $('sDettagliTog').classList.toggle('aperto', !!p);
   if (pre.testo && !p) leggiTesto(); else aggiornaScheda();
-  apriFoglio('fScheda');
+  apriFoglio('fScheda', origine || $('btnNuovo'));
   autoAltezza();
   if (!p) setTimeout(() => $('sTesto').focus(), 320);
 }
-$('btnNuovo').onclick = () => apriScheda(null, vista === 'v-cal' && calGiorno !== oggiIso() ? { data: calGiorno } : {});
+$('btnNuovo').onclick = () => foglio === 'fScheda' ? chiudiFoglio() : apriScheda(null, vista === 'v-cal' && calGiorno && calGiorno !== oggiIso() ? { data: calGiorno } : {}, $('btnNuovo'));
 function autoAltezza() { const t = $('sTesto'); t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }
 
 function leggiTesto() {
@@ -496,6 +687,7 @@ function leggiTesto() {
   if (!s.scelto.ora) { s.v.ora = c.ora; }
   if (!s.scelto.ripeti) s.v.ripeti = c.ripeti;
   if (!s.scelto.priorita) s.v.priorita = c.priorita;
+  if (!s.scelto.tipo) s.v.tipo = s.v.gruppo && $('sTesto').value.includes('?') ? 'domanda' : 'promemoria';
   if (!s.scelto.lista && c.lista) {
     const l = liste.find(x => x.id === c.lista || x.nome.toLowerCase() === c.lista.toLowerCase());
     s.v.lista = l ? l.id : ''; s.v.listaNuova = l ? '' : c.lista;
@@ -516,8 +708,29 @@ function aggiornaScheda() {
   if (v.priorita) c.push(`<span class="urg">${v.priorita === 2 ? '‼️ Urgente' : '❗ Importante'}</span>`);
   if (v.lista && listaDi(v.lista)) c.push(`<span>${listaDi(v.lista).emoji} ${esc(listaDi(v.lista).nome)}</span>`);
   if (v.listaNuova) c.push(`<span>✨ nuova lista "${esc(v.listaNuova)}"</span>`);
-  if (v.data && v.avvisi.length) c.push(`<span>🔔 ${v.avvisi.length === 1 ? (v.avvisi[0] ? durata(v.avvisi[0]) + ' prima' : 'al momento') : v.avvisi.length + ' avvisi'}</span>`);
-  if (v.data && v.insisti) c.push(`<span>📣 insiste</span>`);
+  if (v.data && v.avvisi.length && v.tipo !== 'domanda') c.push(`<span>🔔 ${v.avvisi.length === 1 ? (v.avvisi[0] ? durata(v.avvisi[0]) + ' prima' : 'al momento') : v.avvisi.length + ' avvisi'}</span>`);
+  if (v.data && v.insisti && v.tipo !== 'domanda') c.push(`<span>📣 insiste</span>`);
+  if (v.gruppo) c.push(`<span>👪 ${esc(famiglia.gruppo(v.gruppo)?.nome || '')}${v.perChi.length ? ' · per ' + esc(v.perChi.map(u => nomeMembro(v.gruppo, u)).join(', ')) : ''}</span>`);
+  if (v.tipo === 'domanda') c.push('<span>💬 Domanda</span>');
+  if (!s.id) $('sSalva').textContent = v.tipo === 'domanda' && v.gruppo ? 'Chiedi' : v.gruppo ? 'Condividi' : 'Ricordamelo';
+  // condivisione
+  const gruppi = famiglia.attivo ? famiglia.gruppi : [];
+  $('sCondividi').hidden = !gruppi.length;
+  if (gruppi.length) {
+    $('sGruppo').innerHTML = `<button class="chip ${!v.gruppo ? 'sel' : ''}" data-g="">Solo io</button>` + gruppi.map(g => `<button class="chip ${v.gruppo === g.id ? 'sel' : ''}" data-g="${esc(g.id)}">👪 ${esc(g.nome)}</button>`).join('');
+    $('sGruppo').querySelectorAll('button').forEach(b => b.onclick = () => { v.gruppo = b.dataset.g; v.perChi = []; if (!s.scelto.tipo) v.tipo = v.gruppo && $('sTesto').value.includes('?') ? 'domanda' : 'promemoria'; aggiornaScheda(); });
+    $('sCondivisoCampi').hidden = !v.gruppo;
+    const g = famiglia.gruppo(v.gruppo);
+    if (g) {
+      $('sPerChi').innerHTML = `<button class="chip ${!v.perChi.length ? 'sel' : ''}" data-u="">Tutti</button>` + g.membri.map(m => `<button class="chip ${v.perChi.includes(m.id) ? 'sel' : ''}" data-u="${esc(m.id)}">${esc(m.id === ioId() ? 'Io' : m.nome)}</button>`).join('');
+      $('sPerChi').querySelectorAll('button').forEach(b => b.onclick = () => {
+        const u = b.dataset.u, set = new Set(v.perChi);
+        if (!u) set.clear(); else set.has(u) ? set.delete(u) : set.add(u);
+        v.perChi = set.size === g.membri.length ? [] : [...set]; aggiornaScheda();
+      });
+      $('sTipo').querySelectorAll('button').forEach(b => { b.classList.toggle('sel', b.dataset.t === v.tipo); b.onclick = () => { s.scelto.tipo = 1; v.tipo = b.dataset.t; aggiornaScheda(); }; });
+    }
+  }
   $('sCapito').innerHTML = c.join('') || `<span class="vuoto-capito">${$('sTesto').value ? 'Senza data: lo trovi in "Quando capita"' : 'Scrivi come parli: "domani alle 9 chiamare Marco"'}</span>`;
   // scorciatoie
   const o = oggiIso(), h = new Date().getHours();
@@ -576,16 +789,25 @@ $('sSalva').onclick = async () => {
     const nuova = await archivio.salvaLista({ nome: v.listaNuova.replace(/^./, c => c.toUpperCase()), emoji: '📌', colore: COLORI[liste.length % COLORI.length], ordine: liste.length });
     lista_ = nuova.id;
   }
+  const domanda = v.gruppo && v.tipo === 'domanda';
   const p = {
-    ...(s.originale || {}), titolo: v.titolo, data: v.data, ora: v.data ? v.ora : '', ripeti: v.data ? v.ripeti : null,
-    avvisi: v.avvisi, insisti: v.insisti, priorita: v.priorita, lista: lista_, note: v.note.trim(),
-    fuso: cfg.fuso
+    ...(s.originale || {}), titolo: v.titolo, data: v.data, ora: v.data ? v.ora : '', ripeti: v.data && !domanda ? v.ripeti : null,
+    avvisi: domanda ? [] : v.avvisi, insisti: domanda ? 0 : v.insisti, priorita: v.priorita, lista: lista_, note: v.note.trim(),
+    fuso: cfg.fuso, gruppo: v.gruppo || '', perChi: v.gruppo ? v.perChi : [], tipo: domanda ? 'domanda' : 'promemoria'
   };
+  if (p.gruppo && !s.originale?.gruppo) Object.assign(p, { autore: { id: ioId(), nome: famiglia.io.nome }, risposte: [] });
+  if (s.originale && (s.originale.gruppo || '') !== p.gruppo) {
+    // Cambia "con chi": nasce una voce nuova e la vecchia sparisce (anche per gli altri).
+    await archivio.elimina(s.originale.id);
+    for (const k of ['id', 'seqServer', 'risposte', 'autore']) delete p[k];
+    if (p.gruppo) Object.assign(p, { autore: { id: ioId(), nome: famiglia.io.nome }, risposte: [] });
+  }
   if (s.originale && (s.originale.data !== p.data || s.originale.ora !== p.ora)) delete p.rinvio;
   const salvato = await archivio.salva(p);
   chiudiFoglio();
   const primo = prossimoAvviso(salvato, adesso(), cfg);
-  toast(s.id ? 'Modificato' : primo ? `Ok! Ti avviso ${quandoLeggibile(primo)}` : salvato.data ? 'Fatto, è in agenda' : 'Ok, lo trovi in "Quando capita"');
+  const gNome = famiglia.gruppo(salvato.gruppo)?.nome;
+  toast(salvato.tipo === 'domanda' ? `Domanda inviata a "${gNome}"` : s.id ? 'Modificato' : gNome && !perAvvisi(salvato) ? `Condiviso con "${gNome}"` : primo ? `Ok! Ti avviso ${quandoLeggibile(primo)}` : salvato.data ? 'Fatto, è in agenda' : 'Ok, lo trovi in "Quando capita"');
   if (!s.id && 'Notification' in window && Notification.permission === 'default' && primo) setTimeout(() => toast('Attiva le notifiche per ricevere gli avvisi', 'Attiva', chiediNotifiche), 2600);
   pianifica();
 };
@@ -656,16 +878,15 @@ $('lElimina').onclick = async () => {
   if (!confirm(n ? `Eliminare la lista? I suoi ${n} promemoria restano, senza lista.` : 'Eliminare la lista?')) return;
   for (const p of lista.filter(p => p.lista === lv.id)) await archivio.salva({ ...p, lista: '' });
   await archivio.eliminaLista(lv.id);
-  chiudiFoglio(); listaAperta = null; history.back();
+  chiudiFoglio(); listaAperta = null; disegna(); aggiornaStoria();
 };
 
 /* ---------- ricerca ---------- */
-let vistaPrimaDiCercare = 'v-oggi';
+let vistaPrimaDiCercare = CASA;
+function chiudiRicerca() { if ($('cercaBox').hidden) return; $('cercaBox').hidden = true; ricerca = ''; $('cercaInput').value = ''; }
 $('btnCerca').onclick = () => {
-  const aperta = !$('cercaBox').hidden;
-  $('cercaBox').hidden = aperta;
-  if (aperta) { ricerca = ''; $('cercaInput').value = ''; vaiA(vistaPrimaDiCercare, false); }
-  else { vistaPrimaDiCercare = vista; vaiA('v-cerca', false); $('cercaInput').focus(); }
+  if (!$('cercaBox').hidden) { chiudiRicerca(); return vaiA(vistaPrimaDiCercare); }
+  vistaPrimaDiCercare = vista; $('cercaBox').hidden = false; vaiA('v-cerca'); $('cercaInput').focus();
 };
 $('cercaInput').oninput = () => { ricerca = $('cercaInput').value; vistaCerca(); };
 
@@ -721,16 +942,16 @@ async function pianifica() {
     // Nell'app Android gli avvisi li mostra il sistema: qui aggiorno solo bollino e "tra X min".
     aggiornaBollino();
     timer = setTimeout(pianifica, 60e3);
-    if (vista === 'v-oggi' && !foglio && !trascina) vistaOggi();
+    if (!foglio && !trascina && (vista === 'v-oggi' || vista === 'v-cal')) disegna();
     return;
   }
-  const r = await controlla(archivio, mostraAvviso);
-  aggiornaBollino(r.bollino);
+  const r = await controlla(archivio, mostraAvviso, adesso(), perAvvisi);
+  aggiornaBollino();
   const attesa = r.prossimo ? Math.min(Math.max(r.prossimo - adesso() + 500, 1000), 60e3) : 60e3;
   timer = setTimeout(pianifica, attesa);
-  if (vista === 'v-oggi' && !foglio && !trascina) vistaOggi(); // aggiorna i "tra X min"
+  if (!foglio && !trascina && (vista === 'v-oggi' || vista === 'v-cal')) disegna(); // aggiorna i "tra X min"
 }
-function aggiornaBollino(n = bollino(lista, cfg, adesso())) {
+function aggiornaBollino(n = bollino(lista.filter(perAvvisi), cfg, adesso()) + lista.filter(inAttesa).length) {
   const b = $('bollinoOggi'); b.hidden = !n; b.textContent = n > 99 ? '99+' : n;
   if (N.nativo) return N.bollino(n, cfg.bollino);
   if (!('setAppBadge' in navigator)) return;
@@ -809,6 +1030,7 @@ function leggiIngresso() {
   history.replaceState(null, '', location.pathname);
   if (q.has('apri')) { const p = lista.find(x => x.id === q.get('apri')); if (p) return apriScheda(p, { occ: q.get('occ') || '' }); }
   if (q.has('vista')) return vaiA(q.get('vista'));
+  if (q.has('invito')) { sessionStorage.setItem('invito', q.get('invito').toUpperCase()); gruppoAperto = 'nuovo'; return vaiA('v-fam'); }
   if (q.has('aggiungi')) {
     // Da un'altra app del pacchetto: testo libero oppure JSON { titolo, data, ora, ripeti, lista, note, origine }.
     const a = q.get('aggiungi').replace(/^web\+ricordami:/, '');
@@ -822,23 +1044,37 @@ function leggiIngresso() {
 }
 
 /* ---------- avvio ---------- */
+// Avvisi delle novità della famiglia: "💬 Anna ti chiede", "✅ Bruno ha fatto"…
+function avvisaNovita(eventi) {
+  ricarica();
+  for (const e of eventi) {
+    const f = fraseEvento(e, ioId());
+    if (N.nativo) N.notificaSubito(f.titolo, f.corpo, { id: e.voce || '' });
+    else mostraAvviso({ titolo: f.titolo, corpo: f.corpo, chiave: 'ev' + e.seq, priorita: 0, tipo: 'evento' });
+  }
+}
+
 (async () => {
+  await famiglia.carica();
   cfg = await archivio.impostazioni();
   applicaAspetto();
   await ricarica();
   if (N.nativo) {
+    document.documentElement.dataset.nativo = '';
+    N.suIndietro(() => indietro());
     permessoNativo = await N.permesso();
     await N.prepara({
       suAzione: async (azione, { id, occ }) => {
         if (azione === 'fatto' && id) { await archivio.segnaFatto(id, occ); toast('Fatto!'); }
         else if (azione === 'rinvia' && id) { await archivio.rinvia(id, occ, adesso() + 10 * 60e3); toast('Te lo ricordo tra 10 minuti'); }
-        else if (id) { const p = lista.find(x => x.id === id); if (p) apriScheda(p, { occ }); }
+        else if (id) { const p = lista.find(x => x.id === id); if (p) p.tipo === 'domanda' ? apriDomanda(p) : apriScheda(p, { occ }); }
       },
       suCondiviso: testo => cfg.profilo && apriScheda(null, { testo })
     });
   }
   if (!cfg.profilo) benvenuto();
   else { leggiIngresso(); pianifica(); riprogramma(); }
+  famiglia.avvia(avvisaNovita);
   if (!N.nativo && 'serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js', { type: 'module', updateViaCache: 'none' }).catch(() => {});
   }

@@ -49,6 +49,8 @@ const tema = async (t, modo) => {
     await archivio.salvaImpostazioni({ tema: t, modo });
   }, [t, modo]);
   await page.reload();
+  await vedi('#v-cal.attiva .griglia');
+  await page.click('.tab[data-v="v-oggi"]');
   await vedi('#v-oggi .riassunto');
 };
 
@@ -68,7 +70,34 @@ await page.click('#bDopo');
 await page.waitForFunction(() => document.getElementById('benvenuto').hidden);
 passo('primo avvio: profilo Scordarello, tema, esempi');
 
+/* ---------- prima pagina: calendario ---------- */
+await vedi('#v-cal.attiva .griglia');
+assert.equal(await testo('#titolo'), 'Calendario');
+passo('la prima pagina è il calendario');
+
+/* ---------- tasto indietro: chiude, torna al calendario, poi lascia uscire ---------- */
+await page.click('.tab[data-v="v-liste"]');
+await page.click('.carta-lista:has-text("Spesa")');
+await page.click('#btnNuovo'); await vedi('#fScheda.on');
+await page.goBack(); await page.waitForFunction(() => !document.getElementById('fScheda').classList.contains('on'));
+await page.goBack(); await vedi('.carta-lista.nuova');
+await page.goBack(); await vedi('#v-cal.attiva');
+assert.equal(await page.evaluate(() => history.state?.guardia ?? null), null, 'al calendario non resta nessun passo in sospeso');
+passo('indietro: finestra → lista → liste → calendario, senza passi a vuoto');
+
+/* ---------- il + apre una finestra che nasce dal pulsante ---------- */
+await page.click('#btnNuovo');
+await vedi('#fScheda.on.finestra');
+await page.waitForTimeout(600); // fine dell'animazione
+const origine = await page.evaluate(() => getComputedStyle(document.getElementById('fScheda')).transformOrigin);
+const piu = await page.locator('#btnNuovo').boundingBox(), fin = await page.locator('#fScheda').boundingBox();
+const [ox, oy] = origine.split(' ').map(parseFloat);
+assert.ok(Math.abs(fin.x + ox - (piu.x + piu.width / 2)) < 3 && Math.abs(fin.y + oy - (piu.y + piu.height / 2)) < 3, 'la finestra si allarga dal centro del +');
+await page.click('#btnNuovo'); await page.waitForFunction(() => !document.getElementById('fScheda').classList.contains('on'));
+passo('il + apre una finestra che si allarga dal centro del pulsante, e la richiude');
+
 /* ---------- vista Oggi ---------- */
+await page.click('.tab[data-v="v-oggi"]');
 await vedi('#v-oggi .gruppo.ritardo');
 assert.match(await testo('#g-ritardo'), /Restituire il libro a Giulia/);
 assert.match(await testo('#v-oggi'), /Latte, pane, uova/);
@@ -148,7 +177,7 @@ assert.match(await testo('#v-liste'), /Pagare la bolletta/);
 await page.goBack();
 await vedi('.carta-lista.nuova');
 await foto('15-elegante-liste');
-await page.click('.tab[data-v="v-imp"]');
+await page.click('#btnImp');
 await vedi('#iAvvisi');
 await foto('16-elegante-impostazioni');
 passo('calendario con pallini, liste, impostazioni');
@@ -161,7 +190,7 @@ await page.click('#btnCerca');
 passo('ricerca');
 
 /* ---------- export .ics ---------- */
-const [scaricato] = await Promise.all([page.waitForEvent('download'), page.click('.tab[data-v="v-imp"]').then(() => page.click('#iIcs'))]);
+const [scaricato] = await Promise.all([page.waitForEvent('download'), page.click('#btnImp').then(() => page.click('#iIcs'))]);
 const ics = await (await import('node:fs/promises')).readFile(await scaricato.path(), 'utf8');
 assert.match(ics, /RRULE:FREQ=WEEKLY;BYDAY=MO,TH/); assert.match(ics, /BEGIN:VALARM/);
 passo('esportazione calendario .ics con ripetizioni e avvisi');

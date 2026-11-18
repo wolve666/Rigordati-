@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo nelle versioni di prova: permette di collegarsi a un server di casa senza HTTPS (es. http://192.168.1.20:8787). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -3,7 +3,7 @@
 **Le cose importanti, al momento giusto.**
 Promemoria che capiscono come parli, avvisano quando serve e insistono finché non hai fatto. Nato dal nucleo di [Rigordati!!](../README.md), pensato per essere venduto. Gira come **app Android** (APK) e come app web.
 
-Versione **v0.1.0** · Documento di prodotto: [docs/PRODOTTO.md](docs/PRODOTTO.md) · Anteprime: [docs/anteprime/](docs/anteprime/)
+Versione **v0.2.0** · Documento di prodotto: [docs/PRODOTTO.md](docs/PRODOTTO.md) · Anteprime: [docs/anteprime/](docs/anteprime/)
 
 ## Com'è fatta
 
@@ -24,6 +24,21 @@ Nessuna libreria, nessuna compilazione: moduli JavaScript nativi, si pubblica co
 | `manifest.webmanifest` | Installazione, scorciatoie, condivisione da altre app, link `web+ricordami:` |
 | `icone/` | Icona "!!" (SVG sorgente + PNG), bollino monocromatico per la barra di stato |
 
+## Famiglia (messaggistica come in Rigordati)
+
+Promemoria condivisi, **domande** con risposta Sì / No / Forse o scritta, "**per chi**", "**Rispondi tu**", avvisi agli altri ("💬 Anna ti chiede", "💬 Bruno ha risposto", "✅ Bruno ha fatto"), codice d'invito di 8 caratteri valido 7 giorni, più famiglie o gruppi.
+
+| Parte | Dove |
+|---|---|
+| Server (lo stesso codice per Cloudflare e per un server tuo) | `server/app.js`, `server/schema.sql` |
+| Avvio su Node con SQLite | `npm run server` → `http://localhost:8787` (file `ricordami.db`) |
+| Avvio su Cloudflare (D1) | `server/worker.js`, `server/wrangler.toml` |
+| Motore nell'app: coda offline, sincronizzazione ogni 15 s, avvisi | `js/famiglia.js` |
+
+**Provarla con due telefoni oggi, senza server online**: sul computer, nella cartella `ricordami`, `npm run server` (serve Node 22.13 o più recente). Sui telefoni, nella stessa rete Wi-Fi: Famiglia › indirizzo `http://IP-DEL-COMPUTER:8787` › il tuo nome › uno crea la famiglia, l'altro entra con il codice. Le notifiche arrivano mentre l'app è aperta o appena la si riapre; con l'app chiusa arriveranno con le notifiche push (Firebase), da aggiungere con il server online.
+
+> Le versioni di prova dell'APK accettano server senza HTTPS sulla rete di casa (`android/app/src/debug/`, `allowMixedContent` in `capacitor.config.json`). Prima del Play Store: solo HTTPS.
+
 ## App Android
 
 | Cosa | Dove |
@@ -41,10 +56,12 @@ Nessuna libreria, nessuna compilazione: moduli JavaScript nativi, si pubblica co
 
 | Comando | Cosa fa |
 |---|---|
-| `npm test` | 44 test: frasi, ripetizioni, avvisi, pianificatore |
+| `npm test` | 51 test: frasi, ripetizioni, avvisi, pianificatore, server |
 | `npm run test:app` | L'app vera nel browser: primo avvio, frasi, gesti, avvisi, temi, condivisione |
 | `npm run anteprime` | Come sopra, salvando le schermate in `docs/anteprime/` |
 | `npm run test:nativo` | Lo strato Android con un Capacitor finto: avvisi programmati, azioni, condivisione |
+| `npm run test:famiglia` | Due persone e un server: domande, risposte, cose da fare insieme, coda senza rete |
+| `npm run server` | Avvia il servizio famiglia sul computer |
 | `npm run apk` | Costruisce l'APK di prova |
 
 Per provarla: `python3 -m http.server` in questa cartella e aprire `http://localhost:8000`.

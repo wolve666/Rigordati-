@@ -62,14 +62,19 @@ export const archivio = {
 
   promemoria: () => tutti('promemoria'),
   uno: id => leggi('promemoria', id),
-  async salva(p) {
+  // daServer: la modifica arriva dalla sincronizzazione e non va rimandata indietro.
+  async salva(p, { daServer = false } = {}) {
     const ora = Date.now();
-    const v = { creato: ora, ...p, id: p.id || nuovoId(), aggiornato: ora };
+    const v = { creato: ora, ...p, id: p.id || nuovoId(), aggiornato: daServer ? p.aggiornato || ora : ora };
     await scrivi('promemoria', v);
-    avvisa({ tipo: 'promemoria', id: v.id });
+    avvisa({ tipo: 'promemoria', id: v.id, gruppo: v.gruppo || '', daServer });
     return v;
   },
-  async elimina(id) { await togli('promemoria', id); avvisa({ tipo: 'promemoria', id }); },
+  async elimina(id, { daServer = false } = {}) {
+    const p = await this.uno(id);
+    await togli('promemoria', id);
+    avvisa({ tipo: 'eliminato', id, gruppo: p?.gruppo || '', daServer });
+  },
   async segnaFatto(id, occ, valore = true) {
     const p = await this.uno(id); if (!p) return null;
     if (p.ripeti) p.fatti = { ...(p.fatti || {}), [occ]: valore || undefined };

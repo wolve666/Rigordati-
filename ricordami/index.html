@@ -27,6 +27,8 @@
   <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></symbol>
   <symbol id="i-liste" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></symbol>
   <symbol id="i-imp" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></symbol>
+  <symbol id="i-fam" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M15.8 14.4c2.9-.6 5.2 1.6 5.2 4.6"/></symbol>
+  <symbol id="i-invia" viewBox="0 0 24 24"><path d="M4 12 20 4l-4 16-4-6.5z"/><path d="m12 13.5 8-9.5"/></symbol>
   <symbol id="i-piu" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-cerca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
   <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
@@ -45,23 +47,25 @@
   <header class="testa">
     <div class="testa-titoli"><p class="sopratitolo" id="sopratitolo"></p><h1 id="titolo">Oggi</h1></div>
     <button class="icona-btn" id="btnCerca" aria-label="Cerca"><svg class="i"><use href="#i-cerca"/></svg></button>
+    <button class="icona-btn" id="btnImp" aria-label="Impostazioni"><svg class="i"><use href="#i-imp"/></svg></button>
   </header>
   <div class="cerca" id="cercaBox" hidden><input id="cercaInput" type="search" placeholder="Cerca tra i promemoria…" autocomplete="off"></div>
 
   <main id="contenuto">
-    <section class="vista attiva" id="v-oggi" data-titolo="Oggi"></section>
-    <section class="vista" id="v-cal" data-titolo="Calendario"></section>
+    <section class="vista attiva" id="v-cal" data-titolo="Calendario"></section>
+    <section class="vista" id="v-oggi" data-titolo="Oggi"></section>
+    <section class="vista" id="v-fam" data-titolo="Famiglia"></section>
     <section class="vista" id="v-liste" data-titolo="Liste"></section>
     <section class="vista" id="v-imp" data-titolo="Impostazioni"></section>
     <section class="vista" id="v-cerca" data-titolo="Cerca"></section>
   </main>
 
   <nav class="barra" aria-label="Sezioni">
-    <button class="tab attiva" data-v="v-oggi"><svg class="i"><use href="#i-oggi"/></svg>Oggi<span class="bollino-tab" id="bollinoOggi" hidden></span></button>
-    <button class="tab" data-v="v-cal"><svg class="i"><use href="#i-cal"/></svg>Calendario</button>
+    <button class="tab attiva" data-v="v-cal"><svg class="i"><use href="#i-cal"/></svg>Calendario</button>
+    <button class="tab" data-v="v-oggi"><svg class="i"><use href="#i-oggi"/></svg>Oggi<span class="bollino-tab" id="bollinoOggi" hidden></span></button>
     <button class="piu" id="btnNuovo" aria-label="Nuovo promemoria"><svg class="i"><use href="#i-piu"/></svg></button>
+    <button class="tab" data-v="v-fam"><svg class="i"><use href="#i-fam"/></svg><span id="tabFamNome">Famiglia</span><span class="bollino-tab" id="bollinoFam" hidden></span></button>
     <button class="tab" data-v="v-liste"><svg class="i"><use href="#i-liste"/></svg>Liste</button>
-    <button class="tab" data-v="v-imp"><svg class="i"><use href="#i-imp"/></svg>Impostazioni</button>
   </nav>
 </div>
 
@@ -74,6 +78,13 @@
   <textarea class="testo-grande" id="sTesto" rows="1" maxlength="300" placeholder="Cosa devo ricordarti?"></textarea>
   <div class="capito" id="sCapito"></div>
   <div class="chips" id="sRapidi"></div>
+  <div id="sCondividi" hidden>
+    <div class="campo"><span class="etichetta">Con chi</span><div class="chips" id="sGruppo"></div></div>
+    <div id="sCondivisoCampi" hidden>
+      <div class="campo"><span class="etichetta">Per chi</span><div class="chips" id="sPerChi"></div></div>
+      <div class="campo"><div class="segmenti" id="sTipo"><button data-t="promemoria">📌 Promemoria</button><button data-t="domanda">💬 Domanda</button></div></div>
+    </div>
+  </div>
   <button class="dettagli-tog" id="sDettagliTog">Dettagli <svg class="i"><use href="#i-giu"/></svg></button>
   <div id="sDettagli" hidden>
     <div class="campo riga-campi">
@@ -109,6 +120,17 @@
     <button class="btn pericolo" id="sElimina" hidden>Elimina</button>
     <button class="btn primario" id="sSalva" disabled>Ricordamelo</button>
   </div>
+</section>
+
+<!-- domanda: risposte come in una chat -->
+<section class="foglio" id="fDomanda" role="dialog" aria-labelledby="dTitolo">
+  <div class="maniglia"></div>
+  <h2 id="dTitolo"></h2>
+  <div class="riga-meta" id="dMeta"></div>
+  <div class="thread" id="dRisposte"></div>
+  <div class="rapide" id="dRapide"><button data-r="Sì" class="r-si">Sì</button><button data-r="No" class="r-no">No</button><button data-r="Forse" class="r-forse">Forse</button></div>
+  <div class="riga-campi scrivi"><input class="inserto" id="dTesto" placeholder="Scrivi una risposta…" maxlength="500" autocomplete="off"><button class="btn primario" id="dInvia" aria-label="Invia"><svg class="i"><use href="#i-invia"/></svg></button></div>
+  <div class="azioni-foglio"><button class="btn largo" id="dModifica">Modifica la domanda</button></div>
 </section>
 
 <!-- rinvia -->

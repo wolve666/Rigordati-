@@ -1,0 +1,14 @@
+# Server RicordaMi su Cloudflare. Da questa cartella:
+#   npx wrangler d1 create ricordami            → copia l'id qui sotto
+#   npx wrangler d1 execute ricordami --remote --file=schema.sql
+#   npx wrangler deploy
+name = "ricordami-api"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ricordami"
+database_id = "DA-COMPILARE"
+
+# Dominio: api.<tuo dominio> → Workers › ricordami-api › Impostazioni › Domini

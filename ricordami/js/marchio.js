@@ -2,5 +2,8 @@
 export const MARCHIO = {
   nome: 'RicordaMi',
   motto: 'Le cose importanti, al momento giusto.',
-  versione: 'v0.1.0'
+  versione: 'v0.2.0',
+  // Indirizzo del servizio famiglia (es. 'https://api.ricordami.io'). Vuoto finché non c'è il server:
+  // per le prove si può impostare da Impostazioni › Servizio famiglia.
+  server: ''
 };

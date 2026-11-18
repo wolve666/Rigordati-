@@ -11,7 +11,7 @@ const MASSIMO = 150;          // Android ne regge circa 500 per app: teniamoci l
 const COLORE = '#F2577A';
 
 // Id numerico stabile (int Java positivo) dalla chiave dell'avviso.
-const idDi = s => { let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h & 0x7fffffff) || 1; };
+const idDi = s => { let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return 3_000_000 + ((h & 0x7fffffff) % 2_000_000_000); };
 
 export async function prepara({ suAzione, suCondiviso }) {
   if (!nativo) return;
@@ -20,6 +20,7 @@ export async function prepara({ suAzione, suCondiviso }) {
     await LN.registerActionTypes({ types: [{ id: 'PROMEMORIA', actions: [{ id: 'fatto', title: '✓ Fatto' }, { id: 'rinvia', title: '⏰ Tra 10 min' }] }] });
     await LN.createChannel({ id: 'promemoria', name: 'Promemoria', description: 'Gli avvisi dei tuoi promemoria', importance: 5, visibility: 1, vibration: true, lights: true, lightColor: COLORE });
     await LN.createChannel({ id: 'insistenti', name: 'Promemoria che insistono', description: 'Ripetuti finché non segni fatto', importance: 5, visibility: 1, vibration: true, lights: true, lightColor: COLORE });
+    await LN.createChannel({ id: 'famiglia', name: 'Famiglia', description: 'Domande, risposte e novità della famiglia', importance: 5, visibility: 1, vibration: true, lights: true, lightColor: COLORE });
     await LN.createChannel({ id: 'riepiloghi', name: 'Riepiloghi', description: 'Riepilogo del mattino e della sera', importance: 3, visibility: 1 });
   } catch (e) { console.warn('Canali notifiche', e); }
   LN.addListener('localNotificationActionPerformed', e => suAzione(e.actionId, e.notification?.extra || {}));
@@ -61,9 +62,23 @@ export async function programma(lista, cfg, adesso = Date.now()) {
       notifiche.push({ id: idDi(r.chiave), title: r.titolo, body: r.corpo, largeBody: r.corpo, schedule: { at: new Date(r.quando), allowWhileIdle: true }, channelId: 'riepiloghi', smallIcon: 'ic_stat_ricordami', iconColor: COLORE, extra: {} });
   }
   const { notifications: vecchie } = await LN.getPending();
-  if (vecchie.length) await LN.cancel({ notifications: vecchie.map(n => ({ id: n.id })) });
+  const daTogliere = vecchie.filter(n => n.id >= 3_000_000); // solo i promemoria: famiglia e prova restano
+  if (daTogliere.length) await LN.cancel({ notifications: daTogliere.map(n => ({ id: n.id })) });
   if (notifiche.length) await LN.schedule({ notifications: notifiche });
   return notifiche.length;
+}
+
+/** Notifica subito (novità della famiglia). Id dal 2 milioni in su: non si scontra con i promemoria. */
+let progressivo = 0;
+export async function notificaSubito(titolo, corpo, extra = {}) {
+  if (!nativo) return;
+  await P.LocalNotifications.schedule({ notifications: [{
+    id: 2_000_000 + (Date.now() % 1_000_000) + (progressivo++ % 1000), title: titolo, body: corpo, largeBody: corpo,
+    schedule: { at: new Date(Date.now() + 500), allowWhileIdle: true }, channelId: 'famiglia', smallIcon: 'ic_stat_ricordami', iconColor: COLORE, extra
+  }] });
+}
+export function condividiTesto(testo) {
+  return P.Share.share({ text: testo, dialogTitle: 'Invita' }).catch(() => {});
 }
 
 /** Avviso di prova: arriva dal sistema dopo qualche secondo, anche ad app chiusa. */
@@ -84,10 +99,16 @@ export function vibra(tipo = 'leggero') {
   else P.Haptics?.impact({ style: tipo === 'forte' ? 'HEAVY' : 'LIGHT' }).catch(() => {});
   return true;
 }
-export function barraStato(scuro, colore) {
-  if (!nativo || !P.StatusBar) return;
-  P.StatusBar.setStyle({ style: scuro ? 'DARK' : 'LIGHT' }).catch(() => {});
-  P.StatusBar.setBackgroundColor({ color: colore }).catch(() => {});
+// Icone di orologio, batteria e tasti di Android chiare o scure secondo il tema.
+export function barraStato(scuro) {
+  if (!nativo || !P.SystemBars) return;
+  P.SystemBars.setStyle({ style: scuro ? 'DARK' : 'LIGHT' }).catch(() => {});
+}
+
+/** Tasto indietro di Android: `gestisci` restituisce false quando non c'è più niente da chiudere → esco. */
+export function suIndietro(gestisci) {
+  if (!nativo) return;
+  P.App.addListener('backButton', () => { if (!gestisci()) P.App.exitApp(); });
 }
 
 /** Salva un file e apre il menu "Condividi" di Android (backup, calendario). */

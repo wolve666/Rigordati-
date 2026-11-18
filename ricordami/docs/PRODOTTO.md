@@ -99,6 +99,7 @@ Esempi di sinergie:
 |---|---|
 | **1 — fatto** | App completa senza account: tutto quanto sopra |
 | **1b — fatto** | App Android (APK) con avvisi esatti nel sistema, azioni nella notifica, condivisione da altre app |
+| **1c — fatto** | Famiglia come in Rigordati: domande e risposte, per chi, Rispondi tu, avvisi agli altri, inviti; server portabile (Cloudflare o tuo) |
 | 2 — server | Dominio, account, sincronizzazione telefono ↔ computer, avvisi per email ([SERVER.md](SERVER.md)) |
 | 3 — vendita | Pagamenti, prova gratuita, Play Store, sito vetrina, dominio proprio |
 | 4 — condivisione | Liste condivise (dal nucleo "famiglie" di Rigordati) |

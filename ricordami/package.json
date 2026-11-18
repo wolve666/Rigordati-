@@ -4,13 +4,15 @@
   "type": "module",
   "description": "Promemoria che non ti lasciano scordare niente. PWA local-first, nessuna dipendenza a runtime.",
   "scripts": {
-    "test": "TZ=Europe/Rome node --test test/*.test.mjs",
+    "test": "TZ=Europe/Rome node --no-warnings --test test/*.test.mjs",
     "test:app": "node test/e2e/prova.mjs",
     "anteprime": "FOTO=docs/anteprime node test/e2e/prova.mjs",
     "www": "node scripts/prepara-www.mjs",
     "android:sync": "npm run www && npx cap sync android",
     "apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
-    "test:nativo": "node test/e2e/nativo.mjs"
+    "test:nativo": "node test/e2e/nativo.mjs",
+    "test:famiglia": "node --no-warnings test/e2e/famiglia.mjs",
+    "server": "node --no-warnings server/locale.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.6.0",
@@ -20,7 +22,6 @@
     "@capacitor/haptics": "8.0.2",
     "@capacitor/local-notifications": "8.3.1",
     "@capacitor/share": "8.0.3",
-    "@capacitor/status-bar": "8.0.4",
     "@capawesome/capacitor-badge": "8.0.4"
   },
   "devDependencies": {
