@@ -1,0 +1,74 @@
+name: Compila APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Controlli iniziali
+        run: |
+          if [ ! -f google-services.json ]; then echo "::error::Manca google-services.json nella radice del repository"; exit 1; fi
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then echo "::error::Manca il segreto KEYSTORE_BASE64"; exit 1; fi
+
+      - name: Installa dipendenze
+        run: npm install --no-audit --no-fund
+
+      - name: Prepara l'app web
+        run: |
+          mkdir -p www
+          cp index.html sw.js manifest.json *.png www/
+
+      - name: Crea il progetto Android
+        run: |
+          npx cap add android
+          npx @capacitor/assets generate --android --iconBackgroundColor '#A0DEFD' --iconBackgroundColorDark '#A0DEFD'
+          cp -r android-res/drawable-* android/app/src/main/res/
+          cp google-services.json android/app/
+          python3 android-res/patch-android.py ${{ github.run_number }}
+          npx cap sync android
+
+      - name: Compila
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Firma
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > firma.jks
+          BT=$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)
+          VER=$(node -p "require('./package.json').version")
+          echo "VER=$VER" >> $GITHUB_ENV
+          $ANDROID_HOME/build-tools/$BT/zipalign -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk allineato.apk
+          $ANDROID_HOME/build-tools/$BT/apksigner sign --ks firma.jks \
+            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
+            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+            --out Rigordati-v$VER.apk allineato.apk
+          echo "Impronta SHA-1 da inserire in Firebase:"
+          keytool -list -v -keystore firma.jks -storepass "${{ secrets.KEYSTORE_PASSWORD }}" -alias ${{ secrets.KEY_ALIAS }} | grep -E "SHA1|SHA-1"
+          rm firma.jks
+
+      - name: Pubblica la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=v$VER
+          gh release view $TAG >/dev/null 2>&1 || gh release create $TAG --title "Rigordati!! $TAG" --notes "Versione $TAG"
+          gh release upload $TAG Rigordati-v$VER.apk --clobber

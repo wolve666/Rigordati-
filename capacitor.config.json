@@ -1,0 +1,12 @@
+{
+  "appId": "it.educk.rigordati",
+  "appName": "Rigordati!!",
+  "webDir": "www",
+  "backgroundColor": "#DDEFF3",
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "FirebaseAuthentication": { "skipNativeAuth": true, "providers": ["google.com"] },
+    "FirebaseMessaging": { "presentationOptions": ["badge", "sound", "alert"] },
+    "LocalNotifications": { "smallIcon": "ic_stat_rigordati", "iconColor": "#FF6B5B" }
+  }
+}

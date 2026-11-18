@@ -113,6 +113,9 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
 .nota{font-size:.82rem;color:var(--ink-soft);margin:6px 2px 0}
 .btn-grande{width:100%;border:0;background:var(--ink);color:#fff;font-family:var(--ui);font-weight:600;font-size:1.1rem;border-radius:16px;padding:14px;margin-top:14px;cursor:pointer}
 .btn-grande:disabled{opacity:.4}
+.foglio.finestra{left:16px;right:16px;bottom:auto;top:50%;border-radius:26px;padding:22px 20px;transform:translateY(-50%) scale(.85);opacity:0;pointer-events:none;transition:transform .25s cubic-bezier(.2,1.4,.4,1),opacity .2s;text-align:center;max-width:420px;margin:0 auto}
+.foglio.finestra.on{transform:translateY(-50%);opacity:1;pointer-events:auto}
+.btn-sec{width:100%;border:0;background:var(--frigo);color:var(--ink);font-family:var(--ui);font-weight:600;font-size:1rem;border-radius:16px;padding:12px;margin-top:8px;cursor:pointer}
 .btn-elimina{width:100%;border:0;background:none;color:#c0392b;font-family:var(--ui);font-size:.95rem;padding:12px;margin-top:6px;cursor:pointer}
 .risposte{display:flex;flex-direction:column;gap:8px;margin:10px 0}
 .fumetto{background:var(--frigo);border-radius:16px 16px 16px 4px;padding:8px 12px;max-width:85%}
@@ -209,6 +212,15 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
   <div id="dCorpo"></div>
 </div>
 
+<!-- versione e aggiornamenti -->
+<div class="foglio finestra" id="fAgg">
+  <h3>Rigordati!! <span id="aggVer"></span></h3>
+  <p id="aggMsg"></p>
+  <button class="btn-grande" id="aggScarica" hidden>Scarica l'aggiornamento</button>
+  <button class="btn-sec" id="aggProva">Notifica di prova</button>
+  <button class="btn-sec" id="aggChiudi">Chiudi</button>
+</div>
+
 <div id="accesso">
   <h1 class="logo">Rigordati!!</h1>
   <p>Il frigo di casa, ma nel telefono. Entra con il tuo account Google.</p>
@@ -221,11 +233,16 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getAuth, initializeAuth, indexedDBLocalPersistence, signInWithCredential, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.2.6';
+const VERSIONE = 'v0.3.0';
+const REPO = 'wolve666/Rigordati-';
+// APK (Capacitor) o versione web?
+const NATIVO = !!window.Capacitor?.isNativePlatform?.();
+const P = window.Capacitor?.Plugins || {};
+if (NATIVO) document.documentElement.classList.add('nativo');
 // Notifiche: da compilare
 const VAPID = 'BOwgCIEwbSvOif9lH_KJxnd9ctALyRjmquTQa1_gP9Su3QzJCT0fqVXbQF7DBs3AnLPgODxee2UI4Etpv_gjDhs';
 const WORKER = 'https://rigordati.wolve666.workers.dev';
@@ -240,7 +257,7 @@ const firebaseConfig = {
   appId: "1:274044597871:web:a4dd4457c9b50d0178ff9a"
 };
 const fb = initializeApp(firebaseConfig);
-const auth = getAuth(fb);
+const auth = NATIVO ? initializeAuth(fb, { persistence: indexedDBLocalPersistence }) : getAuth(fb);
 const db = initializeFirestore(fb, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }), experimentalAutoDetectLongPolling: true });
 const voci = collection(db, 'voci');
 
@@ -303,14 +320,21 @@ function capisci(testo) {
 const provider = new GoogleAuthProvider();
 $('btnGoogle').onclick = async () => {
   $('accErr').textContent = '';
+  if (NATIVO) {
+    try {
+      const r = await P.FirebaseAuthentication.signInWithGoogle();
+      await signInWithCredential(auth, GoogleAuthProvider.credential(r.credential?.idToken));
+    } catch (e) { $('accErr').textContent = 'Accesso non riuscito: ' + (e.code || e.message); }
+    return;
+  }
   try { await signInWithPopup(auth, provider); }
   catch (e) {
     if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') signInWithRedirect(auth, provider);
     else if (e.code !== 'auth/popup-closed-by-user') $('accErr').textContent = 'Accesso non riuscito: ' + e.code;
   }
 };
-getRedirectResult(auth).catch(() => {});
-$('btnEsci').onclick = () => { if (confirm('Vuoi uscire da Rigordati!!?')) signOut(auth); };
+if (!NATIVO) getRedirectResult(auth).catch(() => {});
+$('btnEsci').onclick = async () => { if (!confirm('Vuoi uscire da Rigordati!!?')) return; if (NATIVO) await P.FirebaseAuthentication.signOut().catch(() => {}); signOut(auth); };
 
 onAuthStateChanged(auth, u => {
   if (stacca) { stacca(); stacca = null; }
@@ -322,6 +346,8 @@ onAuthStateChanged(auth, u => {
     statoSync(snap.metadata.fromCache ? '' : 'ok', snap.metadata.fromCache ? 'Offline: uso i dati salvati sul telefono' : 'Collegato e sincronizzato');
     tutte = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     disegna();
+    programmaPromemoria();
+    apriSePronto();
   }, err => {
     statoSync('err', 'Errore di collegamento: ' + err.code);
     if (err.code === 'permission-denied') {
@@ -532,11 +558,13 @@ async function rispondi(testo) {
 let mioToken = null;
 const notificheOk = () => 'Notification' in window && Notification.permission === 'granted';
 async function preparaNotifiche() {
+  if (NATIVO) { registraNativo(); return; }
   if (!('Notification' in window) || !(await isSupported())) return;
   $('btnCampana').hidden = notificheOk();
   if (notificheOk()) registraTelefono();
 }
 $('btnCampana').onclick = async () => {
+  if (NATIVO) { registraNativo(true); return; }
   const p = await Notification.requestPermission();
   if (p === 'granted') { $('btnCampana').hidden = true; toast('Notifiche attive'); registraTelefono(); }
   else toast('Notifiche bloccate: riattivale dalle impostazioni dell\'app');
@@ -546,7 +574,7 @@ async function registraTelefono() {
     const reg = await navigator.serviceWorker.ready;
     const token = await getToken(getMessaging(fb), { vapidKey: VAPID, serviceWorkerRegistration: reg });
     mioToken = token;
-    if (token) await setDoc(doc(db, 'dispositivi', token), { token, email: io.email, nome: io.nome, agg: serverTimestamp() });
+    if (token) await setDoc(doc(db, 'dispositivi', token), { token, email: io.email, nome: io.nome, piattaforma: 'web', agg: serverTimestamp() });
   } catch (e) { console.warn('Notifiche non registrate', e); }
 }
 async function avvisa(id, evento) {
@@ -559,9 +587,77 @@ async function avvisa(id, evento) {
     else toast(`Notifica inviata a ${j.inviati} dispositiv${j.inviati > 1 ? 'i' : 'o'}`);
   } catch (e) { toast('Postino non raggiungibile: ' + e.message); }
 }
+/* ---------- notifiche native (APK) ---------- */
+async function creaCanali() {
+  const c = [
+    { id: 'domande', name: 'Domande e risposte', importance: 5 },
+    { id: 'impegni', name: 'Nuovi impegni', importance: 4 },
+    { id: 'dafare', name: 'Cose da fare', importance: 3 },
+    { id: 'promemoria', name: 'Promemoria impegni', importance: 5 }
+  ];
+  for (const x of c) await P.FirebaseMessaging.createChannel({ ...x, visibility: 1, vibration: true, lights: true }).catch(() => {});
+}
+async function registraNativo(chiesto = false) {
+  try {
+    const FM = P.FirebaseMessaging;
+    const perm = await FM.requestPermissions();
+    if (perm.receive !== 'granted') {
+      $('btnCampana').hidden = false;
+      if (chiesto) toast('Notifiche bloccate: attivale da Impostazioni → App → Rigordati!!');
+      return;
+    }
+    $('btnCampana').hidden = true;
+    await creaCanali();
+    await P.LocalNotifications.requestPermissions().catch(() => {});
+    const { token } = await FM.getToken();
+    mioToken = token;
+    await setDoc(doc(db, 'dispositivi', token), { token, email: io.email, nome: io.nome, piattaforma: 'android', agg: serverTimestamp() });
+    if (chiesto) toast('Notifiche attive');
+  } catch (e) { toast('Notifiche non registrate: ' + (e.message || e)); }
+}
+if (NATIVO) {
+  P.FirebaseMessaging.addListener('tokenReceived', e => { if (io && e.token) { mioToken = e.token; setDoc(doc(db, 'dispositivi', e.token), { token: e.token, email: io.email, nome: io.nome, piattaforma: 'android', agg: serverTimestamp() }); } });
+  P.FirebaseMessaging.addListener('notificationActionPerformed', e => { daAprire = e.notification?.data?.id || null; apriSePronto(); });
+  P.LocalNotifications.addListener('localNotificationActionPerformed', e => { daAprire = e.notification?.extra?.id || null; apriSePronto(); });
+}
+// toccando una notifica si apre la voce giusta
+let daAprire = null;
+function apriSePronto() {
+  if (!daAprire || !tutte.some(v => v.id === daAprire)) return;
+  const id = daAprire; daAprire = null;
+  if (foglioAperto) chiudiFoglio();
+  setTimeout(() => apriDettaglio(id), 350);
+}
+// promemoria programmati sul telefono: suonano anche senza internet
+const numId = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h) || 1; };
+let timerProm = null;
+function programmaPromemoria() {
+  if (!NATIVO) return;
+  clearTimeout(timerProm);
+  timerProm = setTimeout(async () => {
+    try {
+      const LN = P.LocalNotifications;
+      const { notifications: pend } = await LN.getPending();
+      if (pend.length) await LN.cancel({ notifications: pend.map(n => ({ id: n.id })) });
+      const ora = Date.now();
+      const lista = tutte.filter(v => v.tipo === 'impegno' && !v.fatto && v.avvisoAt > ora)
+        .sort((a, b) => a.avvisoAt - b.avvisoAt).slice(0, 60)
+        .map(v => ({
+          id: numId(v.id), channelId: 'promemoria', smallIcon: 'ic_stat_rigordati', iconColor: '#FF6B5B',
+          title: v.ora ? `Tra un'ora: ${v.testo}` : `Oggi: ${v.testo}`,
+          body: v.ora ? `Alle ${v.ora}` : 'Promemoria di Rigordati!!',
+          schedule: { at: new Date(v.avvisoAt), allowWhileIdle: true }, extra: { id: v.id }
+        }));
+      if (lista.length) await LN.schedule({ notifications: lista });
+    } catch (e) { console.warn('Promemoria non programmati', e); }
+  }, 1500);
+}
+
 // aprendo l'app pulisco la tendina
 document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState !== 'visible' || !navigator.serviceWorker) return;
+  if (document.visibilityState !== 'visible') return;
+  if (NATIVO) { P.FirebaseMessaging.removeAllDeliveredNotifications().catch(() => {}); return; }
+  if (!navigator.serviceWorker) return;
   const reg = await navigator.serviceWorker.getRegistration();
   (await reg?.getNotifications() || []).forEach(n => n.close());
 });
@@ -570,13 +666,42 @@ document.addEventListener('visibilitychange', async () => {
 let syncMsg = 'In collegamento…';
 function statoSync(cls, msg) { $('sync').className = 'sync ' + cls; syncMsg = msg; }
 $('sync').onclick = () => toast(syncMsg);
-// tocco sulla versione: notifica di prova locale
-$('ver').onclick = async () => {
-  if (!notificheOk()) { toast('Prima attiva le notifiche con la campanella'); return; }
-  const reg = await navigator.serviceWorker.ready;
-  await reg.showNotification('Prova di Rigordati!!', { body: 'Se mi vedi nella tendina, Android è a posto', tag: 'prova', icon: 'icon-192.png' });
+/* ---------- versione: aggiornamenti e prova ---------- */
+const piuNuova = (a, b) => {
+  const p = s => String(s).replace(/^v/, '').split('.').map(Number);
+  const x = p(a), y = p(b);
+  for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+  return false;
+};
+async function controllaAgg(manuale) {
+  let tag = null, url = null;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { cache: 'no-store' });
+    if (r.ok) { const j = await r.json(); const a = (j.assets || []).find(x => x.name.endsWith('.apk')); if (a) { tag = j.tag_name; url = a.browser_download_url; } }
+  } catch (_) {}
+  const nuova = NATIVO && tag && piuNuova(tag, VERSIONE);
+  if (!manuale && !nuova) return;
+  $('aggVer').textContent = VERSIONE;
+  if (NATIVO) $('aggMsg').textContent = nuova ? `È disponibile la ${tag}.` : (tag ? 'Hai già l\'ultima versione.' : 'Non riesco a controllare gli aggiornamenti ora.');
+  else $('aggMsg').textContent = url ? 'Su Android installa l\'app vera: notifiche e promemoria più affidabili.' : 'La versione web si aggiorna da sola: trascina giù.';
+  $('aggScarica').hidden = !(nuova || (!NATIVO && url));
+  $('aggScarica').textContent = NATIVO ? `Scarica la ${tag}` : 'Scarica l\'app Android';
+  $('aggScarica').onclick = () => { location.href = url; };
+  if (!foglioAperto) apriFoglio('fAgg');
+}
+$('ver').onclick = () => controllaAgg(true);
+$('aggChiudi').onclick = () => chiudiFoglio();
+$('aggProva').onclick = async () => {
+  if (NATIVO) {
+    await P.LocalNotifications.schedule({ notifications: [{ id: 1, channelId: 'promemoria', smallIcon: 'ic_stat_rigordati', iconColor: '#FF6B5B', title: 'Prova di Rigordati!!', body: 'Se mi vedi nella tendina, è tutto a posto' }] });
+  } else {
+    if (!notificheOk()) { toast('Prima attiva le notifiche con la campanella'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Prova di Rigordati!!', { body: 'Se mi vedi nella tendina, è tutto a posto', tag: 'prova', icon: 'icon-192.png', badge: 'badge-96.png' });
+  }
   toast('Notifica di prova creata');
 };
+if (NATIVO) setTimeout(() => controllaAgg(false), 2500);
 
 /* ---------- trascina giù per aggiornare ---------- */
 (() => {
@@ -612,14 +737,15 @@ function coriandoli(x, y) {
 /* ---------- installazione ---------- */
 let invito = null;
 const installata = () => matchMedia('(display-mode: standalone)').matches;
-if (!installata()) $('btnScarica').hidden = false;
+if (!installata() && !NATIVO) $('btnScarica').hidden = false;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); invito = e; });
 $('btnScarica').onclick = async () => {
+  if (/android/i.test(navigator.userAgent)) { controllaAgg(true); return; }
   if (invito) { invito.prompt(); const r = await invito.userChoice; if (r.outcome === 'accepted') $('btnScarica').hidden = true; invito = null; }
   else toast('Apri il menu ⋮ di Chrome e scegli "Aggiungi a schermata Home"');
 };
 window.addEventListener('appinstalled', () => $('btnScarica').hidden = true);
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && !NATIVO) {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update());
   let ricaricato = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (!ricaricato) { ricaricato = true; location.reload(); } });

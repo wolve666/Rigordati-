@@ -3,8 +3,8 @@
 **Il frigo di casa, ma nel telefono.**
 Calendario condiviso in tempo reale per la famiglia: impegni, domande e cose da fare, con notifiche push e promemoria automatici.
 
-Versione attuale: **v0.2.6**
-App: https://wolve666.github.io/Rigordati/
+Versione attuale: **v0.3.0** (APK Android + versione web per PC)
+App: https://wolve666.github.io/Rigordati-/
 
 ---
 
@@ -221,6 +221,7 @@ Se cambia `cloudflare-worker.js`, va reincollato anche su Cloudflare (la prima r
 
 | Versione | Novità |
 |---|---|
+| v0.3.0 | APK Android (Capacitor, pacchetto `it.educk.rigordati`) compilato su GitHub: accesso Google nativo, notifiche native con canali (Domande, Impegni, Da fare, Promemoria), promemoria programmati sul telefono anche senza internet, tocco sulla notifica che apre la voce, finestra versione con verifica aggiornamenti e notifica di prova |
 | v0.2.6 | Campanella monocromatica per la barra delle notifiche |
 | v0.2.5 | Notifica di prova toccando la versione; ripristinato `sw.js` completo |
 | v0.2.4 | Domanda inviata al tocco del tipo; errori del Worker più chiari |
