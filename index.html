@@ -115,6 +115,8 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
 .btn-grande:disabled{opacity:.4}
 .foglio.finestra{left:16px;right:16px;bottom:auto;top:50%;border-radius:26px;padding:22px 20px;transform:translateY(-50%) scale(.85);opacity:0;pointer-events:none;transition:transform .25s cubic-bezier(.2,1.4,.4,1),opacity .2s;text-align:center;max-width:420px;margin:0 auto}
 .foglio.finestra.on{transform:translateY(-50%);opacity:1;pointer-events:auto}
+.barra{height:12px;border-radius:6px;background:var(--frigo);overflow:hidden;margin:10px 0 4px}
+.barra i{display:block;height:100%;width:0;background:var(--corallo);border-radius:6px;transition:width .2s}
 .btn-sec{width:100%;border:0;background:var(--frigo);color:var(--ink);font-family:var(--ui);font-weight:600;font-size:1rem;border-radius:16px;padding:12px;margin-top:8px;cursor:pointer}
 .btn-elimina{width:100%;border:0;background:none;color:#c0392b;font-family:var(--ui);font-size:.95rem;padding:12px;margin-top:6px;cursor:pointer}
 .risposte{display:flex;flex-direction:column;gap:8px;margin:10px 0}
@@ -216,6 +218,7 @@ textarea:focus,input:focus{outline:none;border-color:var(--ink)}
 <div class="foglio finestra" id="fAgg">
   <h3>Rigordati!! <span id="aggVer"></span></h3>
   <p id="aggMsg"></p>
+  <div class="barra" id="aggBarra" hidden><i id="aggProg"></i></div>
   <button class="btn-grande" id="aggScarica" hidden>Scarica l'aggiornamento</button>
   <button class="btn-sec" id="aggProva">Notifica di prova</button>
   <button class="btn-sec" id="aggChiudi">Chiudi</button>
@@ -237,7 +240,7 @@ import { getAuth, initializeAuth, indexedDBLocalPersistence, signInWithCredentia
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.3.1';
+const VERSIONE = 'v0.3.2';
 const REPO = 'wolve666/Rigordati-';
 // APK (Capacitor) o versione web?
 const NATIVO = !!window.Capacitor?.isNativePlatform?.();
@@ -685,10 +688,33 @@ async function controllaAgg(manuale) {
   if (NATIVO) $('aggMsg').textContent = nuova ? `È disponibile la ${tag}.` : (tag ? 'Hai già l\'ultima versione.' : 'Non riesco a controllare gli aggiornamenti ora.');
   else $('aggMsg').textContent = url ? 'Su Android installa l\'app vera: notifiche e promemoria più affidabili.' : 'La versione web si aggiorna da sola: trascina giù.';
   $('aggScarica').hidden = !(nuova || (!NATIVO && url));
-  $('aggScarica').textContent = NATIVO ? `Scarica la ${tag}` : 'Scarica l\'app Android';
-  $('aggScarica').onclick = () => { location.href = url; };
+  $('aggScarica').textContent = NATIVO ? `Aggiorna alla ${tag}` : 'Scarica l\'app Android';
+  $('aggScarica').disabled = false; $('aggBarra').hidden = true;
+  $('aggScarica').onclick = () => NATIVO ? aggiornaInApp(url) : (location.href = url);
   if (!foglioAperto) apriFoglio('fAgg');
 }
+// aggiornamento dentro l'app: file nella memoria temporanea, mai nei Download
+async function aggiornaInApp(url) {
+  const FS = P.Filesystem, FO = P.FileOpener, nome = 'aggiornamento.apk';
+  $('aggScarica').disabled = true; $('aggScarica').textContent = 'Scarico…';
+  $('aggBarra').hidden = false; $('aggProg').style.width = '0%';
+  let ascolto = null;
+  try {
+    await FS.deleteFile({ path: nome, directory: 'CACHE' }).catch(() => {});
+    ascolto = await FS.addListener('progress', p => { if (p.contentLength > 0) $('aggProg').style.width = Math.round(p.bytes / p.contentLength * 100) + '%'; });
+    const r = await FS.downloadFile({ url, path: nome, directory: 'CACHE', progress: true });
+    $('aggProg').style.width = '100%'; $('aggScarica').textContent = 'Installo…';
+    const percorso = r.path || (await FS.getUri({ path: nome, directory: 'CACHE' })).uri;
+    await FO.open({ filePath: percorso, contentType: 'application/vnd.android.package-archive', openWithDefault: true });
+    $('aggScarica').disabled = false; $('aggScarica').textContent = 'Installa di nuovo';
+    $('aggScarica').onclick = () => FO.open({ filePath: percorso, contentType: 'application/vnd.android.package-archive', openWithDefault: true });
+  } catch (e) {
+    toast('Aggiornamento non riuscito: ' + (e.message || e));
+    $('aggScarica').disabled = false; $('aggScarica').textContent = 'Riprova'; $('aggBarra').hidden = true;
+  } finally { ascolto?.remove?.(); }
+}
+// all'avvio cancello l'APK già installato dalla memoria temporanea
+if (NATIVO) P.Filesystem?.deleteFile({ path: 'aggiornamento.apk', directory: 'CACHE' }).catch(() => {});
 $('ver').onclick = () => controllaAgg(true);
 $('aggChiudi').onclick = () => chiudiFoglio();
 $('aggProva').onclick = async () => {

@@ -48,6 +48,7 @@ Calendario condiviso in tempo reale per coppie e famiglie: impegni, domande con 
 
 ## Idee e lavori aperti
 - Animazione di aggiornamento: **busta con "!!"** al centro dello schermo con effetto battito (zoom avanti/indietro) al posto della papera che gira.
+- Aggiornamenti APK dentro l'app (`aggiornaInApp`): Filesystem.downloadFile in CACHE, FileOpener apre l'installatore; il file si cancella all'avvio successivo. Non tornare al download via browser.
 - Risposta Sì/No/Forse direttamente dalla notifica (serve codice nativo).
 - Accoppiamento pubblico: **invito via email** dalle impostazioni (si inserisce la mail dell'altro, che accede con Google e accetta con un tocco), al posto della lista `AMMESSI` fissa.
 - Notifiche e messaggistica devono essere impeccabili.
