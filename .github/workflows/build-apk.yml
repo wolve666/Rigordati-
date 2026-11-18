@@ -39,8 +39,8 @@ jobs:
       - name: Crea il progetto Android
         run: |
           npx cap add android
-          npx @capacitor/assets generate --android --iconBackgroundColor '#A0DEFD' --iconBackgroundColorDark '#A0DEFD'
-          cp -r android-res/drawable-* android/app/src/main/res/
+          cp -r android-res/drawable-* android-res/mipmap-* android/app/src/main/res/
+          cp android-res/values/ic_launcher_background.xml android/app/src/main/res/values/
           cp google-services.json android/app/
           python3 android-res/patch-android.py ${{ github.run_number }}
           npx cap sync android
