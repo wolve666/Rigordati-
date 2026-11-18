@@ -42,13 +42,14 @@ jobs:
       - run: npm install --no-save playwright-core@1.49.1
       # Usa il Chrome già presente sulle macchine di GitHub, senza scaricare browser.
       - run: CANALE=chrome PLAYWRIGHT=playwright-core npm run test:app
+      - run: CANALE=chrome PLAYWRIGHT=playwright-core npm run test:nativo
 
-  ricordiamoci:
-    name: Ricordiamoci (test e app nel browser)
+  ricordami:
+    name: RicordaMi (test e app nel browser)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ricordiamoci
+        working-directory: ricordami
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -57,3 +58,4 @@ jobs:
       - run: npm test
       - run: npm install --no-save playwright-core@1.49.1
       - run: CANALE=chrome PLAYWRIGHT=playwright-core npm run test:app
+      - run: CANALE=chrome PLAYWRIGHT=playwright-core npm run test:nativo

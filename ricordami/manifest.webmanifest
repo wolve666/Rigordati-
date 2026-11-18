@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "RicordaMi",
+  "short_name": "RicordaMi",
+  "description": "Promemoria che non ti lasciano scordare niente: scrivi come parli, avvisi ripetuti, insiste finché non è fatto.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F5F3",
+  "theme_color": "#F5F5F3",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    { "src": "icone/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icone/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icone/icona-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icone/icona-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icone/bollino-96.png", "sizes": "96x96", "type": "image/png", "purpose": "monochrome" }
+  ],
+  "shortcuts": [
+    { "name": "Nuovo promemoria", "short_name": "Nuovo", "url": "./?nuovo=1", "icons": [{ "src": "icone/icona-192.png", "sizes": "192x192" }] },
+    { "name": "Calendario", "url": "./?vista=v-cal", "icons": [{ "src": "icone/icona-192.png", "sizes": "192x192" }] }
+  ],
+  "share_target": { "action": "./", "method": "GET", "params": { "title": "title", "text": "text", "url": "url" } },
+  "protocol_handlers": [{ "protocol": "web+ricordami", "url": "./?aggiungi=%s" }]
+}
