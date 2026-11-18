@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "274044597871",
+    "project_id": "rigordati",
+    "storage_bucket": "rigordati.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274044597871:android:158f3dc9110de09278ff9a",
+        "android_client_info": {
+          "package_name": "it.educk.rigordati"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "274044597871-rg0rholjmq3kphmm24ja9r7e81dp16ul.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcaMGkfofYTdoNJVUoaO5F1xxHGLyoQls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "274044597871-rg0rholjmq3kphmm24ja9r7e81dp16ul.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
