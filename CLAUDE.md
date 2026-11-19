@@ -20,6 +20,9 @@ Calendario condiviso in tempo reale per coppie e famiglie: impegni, domande con 
   - Segreti: `SA_JSON`, `API_KEY`, `AMMESSI`.
 - Direzione architetturale decisa: **ibrido**. Firebase per login e notifiche; accesso ai dati concentrato in **un unico modulo**, così da poter migrare i dati su Cloudflare in futuro. Preferire una struttura ordinata e scalabile anche se più lenta da scrivere.
 
+## Temi
+- `data-tema` su `<html>` (assente = "frigo", `inchiostro` = Inchiostro quieto); salvato in `localStorage` `rigordati-tema`, applicato da uno script in `<head>`. Ogni tema ridefinisce le variabili CSS e gli stili con il selettore `[data-tema="..."]`. Nuovi temi: aggiungere blocco CSS + voce in `#fTemi` + colore in `COLORE_TEMA`.
+
 ## Dati Firestore
 - `voci/{id}`: `tipo` (`impegno` | `domanda` | `todo`), `testo`, `data` (`AAAA-MM-GG`), `ora` (`HH:MM`), `autore`, `autoreNome`, `creato`, `fatto`, `risposte[]` (`email, nome, testo, quando`), `avvisoAt` (ms, solo impegni futuri).
 - `dispositivi/{token}`: `token`, `email`, `nome`, `agg`.
