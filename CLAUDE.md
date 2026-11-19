@@ -21,7 +21,7 @@ Calendario condiviso in tempo reale per coppie e famiglie: impegni, domande con 
 - Direzione architetturale decisa: **ibrido**. Firebase per login e notifiche; accesso ai dati concentrato in **un unico modulo**, così da poter migrare i dati su Cloudflare in futuro. Preferire una struttura ordinata e scalabile anche se più lenta da scrivere.
 
 ## Temi
-- `data-tema` su `<html>` (assente = "frigo", `inchiostro` = Inchiostro quieto); salvato in `localStorage` `rigordati-tema`, applicato da uno script in `<head>`. Ogni tema ridefinisce le variabili CSS e gli stili con il selettore `[data-tema="..."]`. Nuovi temi: aggiungere blocco CSS + voce in `#fTemi` + colore in `COLORE_TEMA`.
+- `data-tema` su `<html>` (assente = "frigo", `inchiostro` = Inchiostro quieto); salvato in `localStorage` `rigordati-tema`, applicato da uno script in `<head>`. Ogni tema ridefinisce le variabili CSS e gli stili con il selettore `[data-tema="..."]`. Nuovi temi: aggiungere blocco CSS + voce in `#fTemi` + colore in `COLORE_TEMA`. Temi di festa: `festa-scura`, `festa-chiara` (selettore comune `[data-tema^="festa"]`); decorazioni come immagini SVG in data URI dentro il CSS, generate da script Python (fiori, papel picado, calaveras); elementi `.deco-top`, `.deco-bottom`, `.petali`, `.eroe`. Icone della barra: `nav .tab[data-v=...] .ic` con immagine per tema. Iconcine dei biglietti: `iconaVoce()` con lista `ICONE` di parole chiave.
 
 ## Dati Firestore
 - `voci/{id}`: `tipo` (`impegno` | `domanda` | `todo`), `testo`, `data` (`AAAA-MM-GG`), `ora` (`HH:MM`), `autore`, `autoreNome`, `creato`, `fatto`, `risposte[]` (`email, nome, testo, quando`), `avvisoAt` (ms, solo impegni futuri).

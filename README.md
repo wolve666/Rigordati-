@@ -3,7 +3,7 @@
 **Il frigo di casa, ma nel telefono.**
 Calendario condiviso in tempo reale per la famiglia: impegni, domande e cose da fare, con notifiche push e promemoria automatici.
 
-Versione attuale: **v0.4.0** (APK Android + versione web per PC)
+Versione attuale: **v0.5.0** (APK Android + versione web per PC)
 App: https://wolve666.github.io/Rigordati-/
 
 ---
@@ -221,6 +221,7 @@ Se cambia `cloudflare-worker.js`, va reincollato anche su Cloudflare (la prima r
 
 | Versione | Novità |
 |---|---|
+| v0.5.0 | Temi di festa "Día de los Amigos" (scuro) e "Calavera Floral" (chiaro) con papel picado, fiori, calaveras e animazioni dedicate; icone grandi e disegnate nella barra inferiore per tutti i temi; iconcine automatiche sui biglietti in base alle parole |
 | v0.4.0 | Sezione Temi (tasto tavolozza in alto): "Frigo di casa" e il nuovo "Inchiostro quieto", elegante e minimalista; scelta salvata sul dispositivo |
 | v0.3.2 | Aggiornamenti dentro l'app (download con barra nella finestra, file temporaneo cancellato, poi installatore); nuova iconcina notifiche: busta inclinata con punto esclamativo a goccia |
 | v0.3.1 | Icona dell'APK a grandezza piena (prima veniva rimpicciolita due volte) |
