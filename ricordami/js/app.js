@@ -9,6 +9,8 @@ import { controlla, bollino, prossimo } from './pianificatore.js';
 import { esportaIcs } from './ics.js';
 import * as N from './nativo.js';
 import { famiglia, fraseEvento } from './famiglia.js';
+import { NOVITA, ATTUALE } from './novita.js';
+import { cerca as cercaAggiornamento } from './aggiornamenti.js';
 
 /* ---------- chi è chi (famiglia) ---------- */
 const ioId = () => famiglia.io?.id;
@@ -142,6 +144,7 @@ function disegna() {
   $('titolo').textContent = listaAperta ? `${listaDi(listaAperta)?.emoji || ''} ${listaDi(listaAperta)?.nome || ''}` : v.dataset.titolo;
   const o = new Date();
   $('sopratitolo').textContent = `${GIORNI_BELLI[o.getDay()]} ${o.getDate()} ${MESI[o.getMonth()]}`;
+  $('btnImp').classList.toggle('nuovo', !!aggiornamento);
   const nAttesa = lista.filter(inAttesa).length;
   $('bollinoFam').hidden = !nAttesa; $('bollinoFam').textContent = nAttesa;
   $('tabFamNome').textContent = famiglia.gruppi.length === 1 ? famiglia.gruppi[0].nome.slice(0, 12) : 'Famiglia';
@@ -209,7 +212,7 @@ function vistaOggi() {
   const restaOggi = dOggi.filter(x => !x.fatto);
   const prox = ag.find(x => !x.fatto && x.scad > ora && x.scad - ora < 7 * 864e5);
 
-  let h = `<div class="riassunto">
+  let h = `${cartaAggiornamento()}<div class="riassunto">
     <button class="stat ${ritardo.length ? 'ritardo' : 'zero'}" data-salta="g-ritardo"><b>${ritardo.length}</b><span>in ritardo</span></button>
     <button class="stat ${restaOggi.length ? '' : 'zero'}" data-salta="g-oggi"><b>${restaOggi.length}</b><span>oggi</span></button>
     <button class="stat ${dDomani.length ? '' : 'zero'}" data-salta="g-domani"><b>${dDomani.length}</b><span>domani</span></button></div>`;
@@ -223,6 +226,7 @@ function vistaOggi() {
   h += gruppo('Più avanti', avanti.slice(0, 8).map(x => riga(x, { mostraGiorno: true })), '', avanti.length > 8 ? `<button class="altro-btn" data-vai="v-cal">Vedi tutto nel calendario</button>` : '');
   h += gruppo('Quando capita', libere.map(x => riga(x)));
   $('v-oggi').innerHTML = h;
+  collegaCartaAggiornamento();
   $('v-oggi').querySelectorAll('[data-salta]').forEach(b => b.onclick = () => $(b.dataset.salta)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   $('v-oggi').querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiA(b.dataset.vai));
   const pb = $('v-oggi').querySelector('.prossimo');
@@ -248,13 +252,14 @@ function vistaCalendario() {
     g += `<button class="giorno ${+d.slice(5, 7) !== m ? 'fuori' : ''} ${d === o ? 'oggi' : ''} ${d === calGiorno ? 'sel' : ''}" data-d="${d}">${+d.slice(8)}<span class="pallini">${colori.map(c => `<i style="--colore:${c}"></i>`).join('')}</span></button>`;
   }
   const delGiorno = agenda(lista, calGiorno, calGiorno, cfg);
-  $('v-cal').innerHTML = `<div class="cal"><div class="cal-testa">
+  $('v-cal').innerHTML = `${cartaAggiornamento()}<div class="cal"><div class="cal-testa">
       <h2>${MESI[m - 1]} ${y}</h2>
       ${calGiorno !== o || primo.slice(0, 7) !== o.slice(0, 7) ? '<button class="btn-oggi" id="calOggi">Oggi</button>' : ''}
       <button id="calPrec" aria-label="Mese precedente">${icona('sx')}</button><button id="calSucc" aria-label="Mese successivo">${icona('dx')}</button>
     </div><div class="griglia">${g}</div></div>
     ${delGiorno.length ? gruppo(giornoBreve(calGiorno), delGiorno.map(x => riga(x))) : `<div class="vuoto" style="padding-top:12px"><h3>${giornoBreve(calGiorno)}</h3><p>Giornata libera. Tocca di nuovo il giorno per aggiungere qualcosa.</p></div>`}`;
   const sposta = k => { let mm = m + k, yy = y; if (mm < 1) { mm = 12; yy--; } if (mm > 12) { mm = 1; yy++; } calMese = { y: yy, m: mm }; vistaCalendario(); };
+  collegaCartaAggiornamento();
   $('calPrec').onclick = () => sposta(-1);
   $('calSucc').onclick = () => sposta(1);
   if ($('calOggi')) $('calOggi').onclick = () => { calGiorno = o; calMese = null; vistaCalendario(); };
@@ -296,6 +301,78 @@ function vistaListe() {
   $('v-liste').querySelectorAll('[data-l]').forEach(b => b.onclick = () => { listaAperta = b.dataset.l; disegna(); aggiornaStoria(); $('contenuto').scrollTop = 0; });
   $('lNuova').onclick = () => apriFoglioLista(null);
 }
+
+/* ---------- aggiornamenti dell'app ---------- */
+let aggiornamento = null, scaricando = null, codiceInstallato = ATTUALE.codice;
+const OGNI_CONTROLLO = 6 * 3600e3;
+const rimandatoOra = async u => { const r = await archivio.leggiMeta('aggRimandato'); return r?.versione === u.versione && r.fino > adesso(); };
+async function controllaAggiornamenti(manuale = false) {
+  if (!N.nativo) return null;
+  codiceInstallato = (await N.infoApp().catch(() => null))?.codice || ATTUALE.codice;
+  // Un aggiornamento già trovato resta segnalato anche riaprendo l'app (senza chiedere di nuovo a GitHub).
+  const trovato = await archivio.leggiMeta('aggTrovato');
+  if (!aggiornamento && trovato?.codice > codiceInstallato && !(await rimandatoOra(trovato))) { aggiornamento = trovato; disegna(); }
+  if (!manuale && adesso() - ((await archivio.leggiMeta('aggControllo')) || 0) < OGNI_CONTROLLO) return aggiornamento;
+  try {
+    const u = await cercaAggiornamento(MARCHIO.repository, codiceInstallato);
+    await archivio.scriviMeta('aggControllo', adesso());
+    aggiornamento = u && (manuale || !(await rimandatoOra(u))) ? u : null;
+    if (u) await archivio.scriviMeta('aggTrovato', u);
+    disegna();
+    if (manuale && !u) toast(`Hai già l'ultima versione (${ATTUALE.versione})`);
+    return u;
+  } catch (e) {
+    if (manuale) toast('Non riesco a controllare: ' + e.message);
+    return null;
+  }
+}
+function cartaAggiornamento() {
+  const u = aggiornamento; if (!u) return '';
+  const mb = u.dimensione ? ` · ${(u.dimensione / 1048576).toFixed(1).replace('.', ',')} MB` : '';
+  return `<div class="carta-agg" id="cartaAgg">
+    <div class="agg-testa"><span class="segni-mini"><svg width="28" height="28" fill="#fff" stroke="#fff"><use href="#segni"/></svg></span>
+      <div><b>È pronta la versione ${esc(u.versione)}</b><small>Ora hai la ${esc(ATTUALE.versione)}${mb}</small></div></div>
+    ${u.cose.length ? `<ul>${u.cose.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}
+    ${scaricando === null
+      ? `<div class="azioni"><button class="btn primario" id="aggOra">Aggiorna ora</button><button class="btn" id="aggDopo">Più tardi</button></div>`
+      : `<div class="avanzamento"><i style="width:${Math.max(scaricando, 3)}%"></i></div><small style="color:var(--tenue)">${scaricando >= 100 ? 'Conferma l\'installazione nella finestra di Android' : `Scarico… ${scaricando >= 0 ? scaricando + '%' : ''}`}</small>`}
+  </div>`;
+}
+function collegaCartaAggiornamento() {
+  if ($('aggOra')) $('aggOra').onclick = aggiornaOra;
+  if ($('aggDopo')) $('aggDopo').onclick = async () => {
+    await archivio.scriviMeta('aggRimandato', { versione: aggiornamento.versione, fino: adesso() + 864e5 });
+    aggiornamento = null; disegna(); toast('Te lo ricordo domani. Lo trovi anche in Impostazioni');
+  };
+}
+async function aggiornaOra() {
+  const u = aggiornamento || await archivio.leggiMeta('aggTrovato'); if (!u) return;
+  aggiornamento = u; scaricando = 0; disegna();
+  try {
+    await N.scaricaAggiornamento(u.apk, u.sha256, p => {
+      scaricando = p;
+      const barra = document.querySelector('#cartaAgg .avanzamento i'); // aggiorno solo la barra, senza ridisegnare
+      if (barra) { barra.style.width = Math.max(p, 3) + '%'; barra.parentElement.nextElementSibling.textContent = `Scarico… ${p >= 0 ? p + '%' : ''}`; }
+    });
+    scaricando = 100; disegna();
+  } catch (e) {
+    scaricando = null; disegna(); toast('Aggiornamento non riuscito: ' + e.message);
+  }
+}
+// Dopo un aggiornamento: "Cosa c'è di nuovo", una volta sola.
+async function mostraNovitaSeAggiornata() {
+  // Chi usava già l'app prima di questa funzione non ha "versioneVista": arriva dalla versione precedente.
+  const vista = (await archivio.leggiMeta('versioneVista')) ?? ATTUALE.codice - 1;
+  await archivio.scriviMeta('versioneVista', ATTUALE.codice);
+  if (vista >= ATTUALE.codice) return;
+  apriNovita(NOVITA.filter(v => v.codice > vista), `Benvenuta la ${ATTUALE.versione}!`);
+}
+function apriNovita(voci = NOVITA.slice(0, 3), titolo = 'Cosa c\'è di nuovo') {
+  $('nTitolo').textContent = titolo;
+  $('nCorpo').innerHTML = voci.map(v => `<h3>Versione ${esc(v.versione)} · ${esc(v.data)}</h3><ul>${v.cose.map(c => `<li>${esc(c)}</li>`).join('')}</ul>`).join('');
+  apriFoglio('fNovita');
+}
+$('nOk').onclick = () => chiudiFoglio();
 
 function vistaFamiglia() {
   const el = $('v-fam');
@@ -470,6 +547,13 @@ function vistaImpostazioni() {
       <div class="voce"><div>📲 Da altre app<small>Condividi un messaggio o una mail con ${MARCHIO.nome} e diventa un promemoria</small></div></div>
     </div>
 
+    <div class="sez">Aggiornamenti</div>
+    <div class="pannello">
+      <div class="voce"><div>${MARCHIO.nome} ${ATTUALE.versione}<small>${aggiornamento ? `È pronta la ${esc(aggiornamento.versione)}` : N.nativo ? 'Controllo da solo ogni 6 ore' : 'La versione web si aggiorna da sola'}</small></div>
+        ${N.nativo ? `<button class="btn ${aggiornamento ? 'primario' : ''}" id="iAggiorna" style="flex:none;padding:9px 14px">${aggiornamento ? 'Aggiorna' : 'Controlla'}</button>` : ''}</div>
+      <div class="voce cliccabile" id="iNovita"><div>Cosa c'è di nuovo<small>Le novità delle ultime versioni</small></div>${icona('dx')}</div>
+    </div>
+
     <div class="sez">I tuoi dati</div>
     <div class="pannello">
       <div class="voce"><div>Restano su questo dispositivo<small>Nessun account, nessun server. Fai un backup ogni tanto.</small></div></div>
@@ -506,6 +590,8 @@ function vistaImpostazioni() {
     if (famiglia.attivo && u !== famiglia.server) await famiglia.esciDaTutto();
     await famiglia.impostaServer(u); vistaImpostazioni();
   });
+  if ($('iAggiorna')) $('iAggiorna').onclick = () => aggiornamento ? (vaiA(CASA), aggiornaOra()) : controllaAggiornamenti(true);
+  $('iNovita').onclick = () => apriNovita();
   $('iBollino').onchange = e => salva({ bollino: e.target.checked });
   $('iVibra').onchange = e => salva({ vibrazione: e.target.checked });
   if ($('iPermesso')) $('iPermesso').onclick = async () => { await chiediNotifiche(); vistaImpostazioni(); };
@@ -651,8 +737,13 @@ async function chiudiFoglio() {
   $('velo').classList.remove('on'); $('btnNuovo').classList.remove('aperto');
   document.querySelector('.barra').classList.remove('sopra');
   aggiornaStoria();
-  if (origine && f.classList.contains('finestra') && animazioni() && origine.isConnected) await cresci(f, origine, true).catch(() => {});
-  if (foglio !== f.id) f.classList.remove('on', 'finestra');
+  const eraFinestra = f.classList.contains('finestra');
+  if (origine && eraFinestra && animazioni() && origine.isConnected) await cresci(f, origine, true).catch(() => {});
+  if (foglio === f.id) return; // riaperto nel frattempo
+  if (eraFinestra) {
+    // Spengo la transizione "dal basso" dei fogli, altrimenti un fantasma della finestra scivolerebbe giù.
+    f.style.transition = 'none'; f.classList.remove('on', 'finestra'); void f.offsetWidth; f.style.transition = '';
+  } else f.classList.remove('on');
 }
 $('velo').onclick = () => chiudiFoglio();
 
@@ -1008,6 +1099,7 @@ function benvenuto() {
   temi();
   const fine = async () => {
     cfg = await archivio.salvaImpostazioni({ profilo: cfg.sceltaProfilo || 'scordarello' });
+    await archivio.scriviMeta('versioneVista', ATTUALE.codice); // installazione nuova: niente novità da mostrare
     if ($('bEsempi').checked) for (const p of esempi()) await archivio.salva(p);
     b.hidden = true;
     await ricarica(); pianifica(); riprogramma();
@@ -1082,7 +1174,15 @@ function avvisaNovita(eventi) {
   if (!cfg.profilo) benvenuto();
   else { leggiIngresso(); pianifica(); riprogramma(); }
   famiglia.avvia(avvisaNovita);
+  if (cfg.profilo) mostraNovitaSeAggiornata();
+  controllaAggiornamenti();
+  document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && controllaAggiornamenti());
   if (!N.nativo && 'serviceWorker' in navigator && location.protocol !== 'file:') {
+    const avevaController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.register('sw.js', { type: 'module', updateViaCache: 'none' }).catch(() => {});
+    // Versione web: quando arriva una versione nuova lo dico, e ricarico solo se lo vuoi tu.
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (avevaController) toast('È pronta una nuova versione', 'Ricarica', () => location.reload());
+    });
   }
 })();

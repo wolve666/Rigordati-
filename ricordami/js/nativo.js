@@ -81,6 +81,16 @@ export function condividiTesto(testo) {
   return P.Share.share({ text: testo, dialogTitle: 'Invita' }).catch(() => {});
 }
 
+/** Versione installata (versionCode) e scaricamento dell'aggiornamento con avanzamento. */
+export async function infoApp() {
+  return nativo && P.Aggiornamento ? P.Aggiornamento.info() : null;
+}
+export async function scaricaAggiornamento(url, sha256, suAvanzamento) {
+  const ascolto = await P.Aggiornamento.addListener('avanzamento', d => suAvanzamento(d.percento));
+  try { await P.Aggiornamento.scaricaEInstalla({ url, sha256 }); }
+  finally { ascolto?.remove?.(); }
+}
+
 /** Avviso di prova: arriva dal sistema dopo qualche secondo, anche ad app chiusa. */
 export async function prova(secondi = 5) {
   await P.LocalNotifications.schedule({ notifications: [{

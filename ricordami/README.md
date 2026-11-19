@@ -3,7 +3,7 @@
 **Le cose importanti, al momento giusto.**
 Promemoria che capiscono come parli, avvisano quando serve e insistono finché non hai fatto. Nato dal nucleo di [Rigordati!!](../README.md), pensato per essere venduto. Gira come **app Android** (APK) e come app web.
 
-Versione **v0.2.1** · Documento di prodotto: [docs/PRODOTTO.md](docs/PRODOTTO.md) · Anteprime: [docs/anteprime/](docs/anteprime/)
+Versione **v0.3.0** (si cambia in `js/novita.js`) · Documento di prodotto: [docs/PRODOTTO.md](docs/PRODOTTO.md) · Anteprime: [docs/anteprime/](docs/anteprime/)
 
 ## Com'è fatta
 
@@ -51,6 +51,14 @@ Promemoria condivisi, **domande** con risposta Sì / No / Forse o scritta, "**pe
 **Scaricare l'APK**: GitHub → Actions → "APK RicordaMi" → ultima esecuzione → Artifacts. Sul telefono: aprire il file e consentire "installa app sconosciute" per il browser o il gestore file. Gli aggiornamenti si installano sopra senza perdere i dati.
 
 **Costruirlo a mano** (serve Android SDK 36 e Java 21): `npm install && npm run apk` → `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+## Aggiornamenti
+
+1. Aggiungi la nuova versione **in cima** a `js/novita.js` (numero, `codice` +1, data, novità). È l'unico posto: app, APK e GitHub la leggono da lì.
+2. Fai push. GitHub Actions costruisce l'APK e, se la versione è nuova, pubblica la release `ricordami-vX.Y.Z` con l'APK e le novità.
+3. Le app installate controllano ogni 6 ore (e alla riapertura): compare "È pronta la versione X" con le novità, **Aggiorna ora** scarica l'APK con la barra di avanzamento, ne verifica l'impronta SHA-256 e apre l'installazione di Android. Dopo l'aggiornamento l'app mostra una volta "Cosa c'è di nuovo".
+
+La prima volta Android chiede di consentire a RicordaMi di installare app: è normale per le app fuori dal Play Store. Android accetta l'aggiornamento solo se è firmato con la stessa chiave dell'app installata. Nella versione per il Play Store questo meccanismo va tolto (permesso `REQUEST_INSTALL_PACKAGES`): lì aggiorna lo store.
 
 ## Comandi
 

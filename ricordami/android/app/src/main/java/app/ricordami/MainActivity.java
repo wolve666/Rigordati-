@@ -8,6 +8,8 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         // Plugin dell'app: riceve i testi condivisi da altre app ("Condividi con RicordaMi").
         registerPlugin(CondivisionePlugin.class);
+        // Aggiornamenti dell'app scaricati dalle release di GitHub.
+        registerPlugin(AggiornamentoPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

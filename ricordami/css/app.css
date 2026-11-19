@@ -437,3 +437,20 @@ input.codice { font-size: 1.3rem; letter-spacing: .2em; text-transform: uppercas
 .r-si { background: color-mix(in srgb, var(--ok) 22%, var(--superficie)); } .r-no { background: color-mix(in srgb, var(--ritardo) 18%, var(--superficie)); } .r-forse { background: color-mix(in srgb, var(--importante) 22%, var(--superficie)); }
 .scrivi .btn { flex: none; padding: 10px 14px; }
 .campo-server { font-family: ui-monospace, monospace; font-size: .9rem; }
+
+/* ===== aggiornamenti ===== */
+.carta-agg { background: var(--superficie); border-radius: var(--raggio-grande); box-shadow: var(--ombra); padding: 14px 16px; margin-bottom: 16px; border: 1px solid color-mix(in srgb, var(--accento) 35%, var(--linea)); animation: entra .35s var(--morbido); }
+.agg-testa { display: flex; gap: 12px; align-items: center; }
+.agg-testa .segni-mini { flex: none; width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #FF9A5C, #F2477E); display: grid; place-items: center; }
+.agg-testa b { display: block; font-size: 1.02rem; }
+.agg-testa small { color: var(--tenue); }
+.carta-agg ul, #nCorpo ul { margin: 10px 0 4px; padding-left: 20px; color: var(--testo); font-size: .92rem; }
+.carta-agg li, #nCorpo li { margin: 3px 0; }
+.carta-agg .azioni { display: flex; gap: 8px; margin-top: 10px; }
+.carta-agg .azioni .btn { padding: 11px 14px; }
+.avanzamento { height: 8px; border-radius: 4px; background: var(--superficie-2); overflow: hidden; margin-top: 12px; }
+.avanzamento i { display: block; height: 100%; width: 0; background: var(--accento); border-radius: 4px; transition: width .2s linear; }
+#nCorpo h3 { font-size: .95rem; margin: 14px 0 0; color: var(--tenue); font-weight: 600; }
+#btnImp { position: relative; }
+#btnImp.nuovo::after { content: ""; position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--ritardo); border: 2px solid var(--superficie); }
+.foglio.finestra { padding-bottom: 14px; } /* la finestra non tocca la barra di Android: niente margine extra */

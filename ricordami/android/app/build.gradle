@@ -7,8 +7,10 @@ android {
         applicationId "app.ricordami"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "0.2.1"
+        // Versione letta da js/novita.js (prima voce): un solo posto da aggiornare.
+        def novita = file('../../js/novita.js').text
+        versionCode((novita =~ /codice:\s*(\d+)/)[0][1] as int)
+        versionName((novita =~ /versione:\s*'([^']+)'/)[0][1])
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

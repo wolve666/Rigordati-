@@ -32,10 +32,16 @@ const FINTO = () => {
     if (metodo === 'writeFile') return { uri: 'file:///cache/' + arg.path };
     return {};
   } });
-  const nomi = ['LocalNotifications', 'Condivisione', 'Badge', 'Haptics', 'SystemBars', 'App', 'Filesystem', 'Share'];
+  const nomi = ['LocalNotifications', 'Condivisione', 'Badge', 'Haptics', 'SystemBars', 'App', 'Filesystem', 'Share', 'Aggiornamento'];
   const Plugins = Object.fromEntries(nomi.map(n => [n, plugin(n)]));
   // addListener vero: conservo la funzione per poter simulare gli eventi
   for (const n of nomi) Plugins[n].addListener = async (evento, fn) => { (ascolti[`${n}.${evento}`] ||= []).push(fn); return { remove() {} }; };
+  // Aggiornamenti: app installata 0.3.0 (codice 4); il download avanza e poi apre l'installazione.
+  Plugins.Aggiornamento.info = async () => ({ versione: '0.3.0', codice: 4, puoInstallare: true });
+  Plugins.Aggiornamento.scaricaEInstalla = async arg => {
+    chiamate.push({ plugin: 'Aggiornamento', metodo: 'scaricaEInstalla', arg });
+    for (const p of [10, 45, 80, 100]) { await new Promise(r => setTimeout(r, 120)); (ascolti['Aggiornamento.avanzamento'] || []).forEach(f => f({ percento: p })); }
+  };
   window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android', Plugins };
   // Come fa Capacitor su un telefono con la barra a 3 tasti: 24px in alto, 48px in basso.
   addEventListener('DOMContentLoaded', () => {
@@ -48,6 +54,13 @@ const browser = await chromium.launch(process.env.CANALE ? { channel: process.en
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'it-IT', timezoneId: 'Europe/Rome' });
 await ctx.route('https://fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: '' }));
 await ctx.addInitScript(FINTO);
+// GitHub finto: è appena uscita la 0.3.1
+const { testoRelease } = await import('../../js/aggiornamenti.js');
+await ctx.route('https://api.github.com/**', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify([{
+  tag_name: 'ricordami-v0.3.1', draft: false, prerelease: false, html_url: 'https://github.com/x/y/releases/tag/ricordami-v0.3.1', published_at: '2026-11-20T09:00:00Z',
+  body: testoRelease({ versione: '0.3.1', codice: 5, data: '2026-11-20', cose: ['Promemoria con le foto', 'Widget sulla schermata Home'] }, 'cd'.repeat(32)),
+  assets: [{ name: 'RicordaMi-0.3.1.apk', size: 6_100_000, browser_download_url: 'https://github.com/x/y/releases/download/ricordami-v0.3.1/RicordaMi-0.3.1.apk' }]
+}]) }));
 const page = await ctx.newPage();
 const errori = [];
 page.on('pageerror', e => errori.push(e.message));
@@ -117,6 +130,42 @@ assert.equal((await chiamate('App', 'exitApp')).length, 0);
 await indietro();
 assert.equal((await chiamate('App', 'exitApp')).length, 1, 'dal calendario si esce');
 passo('tasto indietro: chiude la finestra, torna al calendario, poi esce dall\'app');
+
+// Aggiornamento: avviso con le novità, pallino sulle impostazioni, download con avanzamento
+await page.locator('#cartaAgg').waitFor({ timeout: 5000 });
+assert.match(await page.locator('#cartaAgg').innerText(), /È pronta la versione 0\.3\.1[\s\S]*5,8 MB[\s\S]*Promemoria con le foto/);
+assert.equal(await page.locator('#btnImp.nuovo').count(), 1, 'pallino sulle impostazioni');
+await page.screenshot({ path: process.env.FOTO_AGG || '/dev/null' }).catch(() => {});
+await page.click('#aggOra');
+await page.waitForFunction(() => /Conferma l'installazione/.test(document.getElementById('cartaAgg')?.innerText || ''), null, { timeout: 5000 });
+const scarica = (await chiamate('Aggiornamento', 'scaricaEInstalla'))[0].arg;
+assert.match(scarica.url, /RicordaMi-0\.3\.1\.apk$/); assert.equal(scarica.sha256, 'cd'.repeat(32));
+passo('aggiornamento: "È pronta la 0.3.1" con novità e peso, download con avanzamento, installazione con controllo SHA-256');
+
+// "Più tardi": la scheda sparisce per un giorno ma l'aggiornamento resta in Impostazioni
+await page.reload();
+await page.locator('#cartaAgg').waitFor({ timeout: 5000 });
+await page.click('#aggDopo');
+await page.waitForFunction(() => !document.getElementById('cartaAgg'));
+await page.reload(); await page.locator('#v-cal.attiva .griglia').waitFor(); await page.waitForTimeout(600);
+assert.equal(await page.locator('#cartaAgg').count(), 0, 'rimandato a domani');
+await page.click('#btnImp');
+assert.equal(await page.locator('#iAggiorna').innerText(), 'Controlla');
+await page.click('#iAggiorna');
+await page.waitForFunction(() => document.getElementById('iAggiorna')?.textContent === 'Aggiorna');
+await page.click('.tab[data-v="v-cal"]');
+passo('"Più tardi": rimandato di un giorno, ma da Impostazioni si ritrova e si aggiorna');
+
+// Dopo un aggiornamento: "Cosa c'è di nuovo", una volta sola
+await page.evaluate(async () => (await import('./js/archivio.js')).archivio.scriviMeta('versioneVista', 3));
+await page.reload();
+await page.locator('#fNovita.on').waitFor({ timeout: 5000 });
+assert.match(await page.locator('#nTitolo').innerText(), /Benvenuta la 0\.3\.0/);
+assert.match(await page.locator('#nCorpo').innerText(), /Avvisi di aggiornamento/);
+await page.click('#nOk');
+await page.reload(); await page.locator('#v-cal.attiva .griglia').waitFor(); await page.waitForTimeout(500);
+assert.equal(await page.locator('#fNovita.on').count(), 0, 'una volta sola');
+passo('dopo l\'aggiornamento: "Cosa c\'è di nuovo" una volta sola');
 
 // Avviso di prova dalle impostazioni
 await page.click('#btnImp');

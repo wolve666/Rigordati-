@@ -1,11 +1,15 @@
 name: APK RicordaMi
 
-# Costruisce l'APK di prova a ogni modifica di ricordami/ (e a mano da Actions → Run workflow).
-# Si scarica da: Actions → "APK RicordaMi" → l'esecuzione → Artifacts.
+# Costruisce l'APK a ogni modifica di ricordami/ (e a mano da Actions → Run workflow).
+# Quando in js/novita.js c'è una versione nuova, crea anche la release su GitHub:
+# le app installate la vedono e propongono l'aggiornamento.
 on:
   push:
     paths: ['ricordami/**', '.github/workflows/apk-ricordami.yml']
   workflow_dispatch:
+
+permissions:
+  contents: write # per pubblicare la release
 
 jobs:
   apk:
@@ -32,11 +36,22 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
       - name: Nome con la versione
         run: |
-          V=$(node -e "import('./js/marchio.js').then(m => console.log(m.MARCHIO.versione))")
-          cp android/app/build/outputs/apk/debug/app-debug.apk "RicordaMi-$V-prova.apk"
+          V=$(node scripts/rilascio.mjs versione)
+          cp android/app/build/outputs/apk/debug/app-debug.apk "RicordaMi-$V.apk"
           echo "VERSIONE=$V" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
-          name: RicordaMi-${{ env.VERSIONE }}-prova
-          path: ricordami/RicordaMi-*-prova.apk
+          name: RicordaMi-${{ env.VERSIONE }}
+          path: ricordami/RicordaMi-*.apk
           retention-days: 30
+      - name: Pubblica la release (solo se la versione è nuova)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(node scripts/rilascio.mjs tag)
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "La release $TAG esiste già: niente da pubblicare."
+          else
+            node scripts/rilascio.mjs testo "RicordaMi-$VERSIONE.apk" > note.md
+            gh release create "$TAG" "RicordaMi-$VERSIONE.apk" --title "RicordaMi $VERSIONE" --notes-file note.md --target "$GITHUB_SHA"
+          fi
