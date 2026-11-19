@@ -394,14 +394,15 @@ textarea.inserto { resize: vertical; min-height: 70px; }
 .foglio.finestra {
   left: 50%; right: auto; bottom: auto; top: calc(var(--inset-alto) + 64px); translate: -50% 0; transform: none;
   width: min(560px, calc(100% - 20px)); max-height: calc(100% - var(--inset-alto) - var(--inset-basso) - 150px);
-  border-radius: var(--raggio-grande); box-shadow: 0 24px 70px rgba(10, 12, 25, .28); transition: none; opacity: 1;
+  border-radius: var(--raggio-grande); box-shadow: 0 16px 40px rgba(10, 12, 25, .24); transition: none; opacity: 1;
+  will-change: transform, opacity; contain: layout paint;
 }
 .foglio.finestra .maniglia { display: none; }
 .foglio.finestra .azioni-foglio { padding-bottom: 2px; }
 @media (min-width: 900px) { .foglio.finestra { top: 12vh; translate: -50% 0; transform: none; opacity: 1; } }
 /* Con la finestra aperta il + (ora ×) resta toccabile sopra il velo per richiuderla */
-.barra:has(.piu.aperto) { z-index: 12; }
-.barra:has(.piu.aperto) .tab { opacity: .35; pointer-events: none; transition: opacity .2s; }
+.barra.sopra { z-index: 12; }
+.barra.sopra .tab { opacity: .35; pointer-events: none; transition: opacity .2s; }
 
 /* ===== famiglia: membri, domande, risposte, attività ===== */
 .avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .9rem; color: #fff; background: var(--c-lilla); }

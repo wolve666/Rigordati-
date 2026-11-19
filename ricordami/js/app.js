@@ -630,21 +630,26 @@ function apriFoglio(id, origine = null) {
   f.classList.toggle('finestra', !!origine);
   f.classList.add('on'); $('velo').classList.add('on');
   $('btnNuovo').classList.toggle('aperto', id === 'fScheda');
-  if (origine && animazioni()) cresci(f, origine);
+  document.querySelector('.barra').classList.toggle('sopra', id === 'fScheda');
   aggiornaStoria();
+  return origine && animazioni() ? cresci(f, origine) : Promise.resolve();
 }
+// Solo transform e opacity: così l'animazione la fa la scheda grafica, senza ricalcoli a ogni fotogramma.
 function cresci(f, origine, chiudi = false) {
   const o = origine.getBoundingClientRect(), r = f.getBoundingClientRect();
   if (!o.width) return Promise.resolve();
   f.style.transformOrigin = `${o.left + o.width / 2 - r.left}px ${o.top + o.height / 2 - r.top}px`;
-  const fotogrammi = [{ transform: 'scale(.04)', opacity: 0, borderRadius: '50%' }, { transform: 'scale(1)', opacity: 1, borderRadius: getComputedStyle(f).borderTopLeftRadius }];
-  return f.animate(chiudi ? fotogrammi.reverse() : fotogrammi, { duration: chiudi ? 240 : 420, easing: chiudi ? 'cubic-bezier(.5,0,.75,0)' : 'cubic-bezier(.2,.9,.25,1.12)' }).finished;
+  const fotogrammi = [{ transform: 'scale(.08)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }];
+  return f.animate(chiudi ? fotogrammi.reverse() : fotogrammi, chiudi
+    ? { duration: 170, easing: 'cubic-bezier(.4,0,1,1)' }
+    : { duration: 260, easing: 'cubic-bezier(.16,1,.3,1)' }).finished.catch(() => {});
 }
 async function chiudiFoglio() {
   if (!foglio) return;
   const f = $(foglio), origine = origineFoglio;
   foglio = null; origineFoglio = null;
   $('velo').classList.remove('on'); $('btnNuovo').classList.remove('aperto');
+  document.querySelector('.barra').classList.remove('sopra');
   aggiornaStoria();
   if (origine && f.classList.contains('finestra') && animazioni() && origine.isConnected) await cresci(f, origine, true).catch(() => {});
   if (foglio !== f.id) f.classList.remove('on', 'finestra');
@@ -673,9 +678,10 @@ function apriScheda(p = null, pre = {}, origine = null) {
   $('sSalva').textContent = p ? 'Salva' : 'Ricordamelo';
   $('sDettagli').hidden = !p; $('sDettagliTog').classList.toggle('aperto', !!p);
   if (pre.testo && !p) leggiTesto(); else aggiornaScheda();
-  apriFoglio('fScheda', origine || $('btnNuovo'));
-  autoAltezza();
-  if (!p) setTimeout(() => $('sTesto').focus(), 320);
+  autoAltezza(); // misure prima dell'animazione, non durante
+  const aperta = apriFoglio('fScheda', origine || $('btnNuovo'));
+  // La tastiera ridimensiona lo schermo: la apro solo a finestra già aperta, così l'animazione non scatta.
+  if (!p) aperta.then(() => foglio === 'fScheda' && $('sTesto').focus({ preventScroll: true }));
 }
 $('btnNuovo').onclick = () => foglio === 'fScheda' ? chiudiFoglio() : apriScheda(null, vista === 'v-cal' && calGiorno && calGiorno !== oggiIso() ? { data: calGiorno } : {}, $('btnNuovo'));
 function autoAltezza() { const t = $('sTesto'); t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }
@@ -741,7 +747,8 @@ function aggiornaScheda() {
   ].filter(Boolean);
   $('sRapidi').innerHTML = rapidi.map(([n, d, t]) => `<button class="chip ${v.data === d && (v.ora === t || !t) && (d || !v.data) ? 'sel' : ''}" data-d="${d}" data-t="${t}">${n}</button>`).join('');
   $('sRapidi').querySelectorAll('button').forEach(b => b.onclick = () => { s.scelto.data = s.scelto.ora = 1; v.data = b.dataset.d; v.ora = b.dataset.t; aggiornaScheda(); });
-  // dettagli
+  // dettagli: li costruisco solo se sono aperti (la finestra nuova si apre più in fretta)
+  if ($('sDettagli').hidden) return;
   $('sData').value = v.data; $('sOra').value = v.ora;
   const r = v.ripeti;
   $('sRipeti').querySelectorAll('button').forEach(b => b.classList.toggle('sel', (r?.ogni || '') === b.dataset.r));
@@ -767,7 +774,7 @@ function aggiornaScheda() {
   $('sListe').innerHTML = `<button class="chip ${!v.lista ? 'sel' : ''}" data-l="">Nessuna</button>` + liste.map(l => `<button class="chip lista ${v.lista === l.id ? 'sel' : ''}" data-l="${esc(l.id)}" style="--colore-lista:var(--c-${l.colore})">${l.emoji} ${esc(l.nome)}</button>`).join('');
   $('sListe').querySelectorAll('button').forEach(b => b.onclick = () => { s.scelto.lista = 1; v.lista = b.dataset.l; v.listaNuova = ''; aggiornaScheda(); });
 }
-$('sDettagliTog').onclick = () => { const h = !$('sDettagli').hidden; $('sDettagli').hidden = h; $('sDettagliTog').classList.toggle('aperto', !h); };
+$('sDettagliTog').onclick = () => { const h = !$('sDettagli').hidden; $('sDettagli').hidden = h; $('sDettagliTog').classList.toggle('aperto', !h); if (!h) aggiornaScheda(); };
 $('sData').oninput = () => { s.scelto.data = 1; s.v.data = $('sData').value; aggiornaScheda(); };
 $('sOra').oninput = () => { s.scelto.ora = 1; s.v.ora = $('sOra').value; if (s.v.ora && !s.v.data) s.v.data = oggiIso(); aggiornaScheda(); };
 $('sRipeti').querySelectorAll('button').forEach(b => b.onclick = () => {
