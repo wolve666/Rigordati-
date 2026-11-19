@@ -303,19 +303,20 @@ function vistaListe() {
 }
 
 /* ---------- aggiornamenti dell'app ---------- */
-let aggiornamento = null, scaricando = null, codiceInstallato = ATTUALE.codice;
+let aggiornamento = null, scaricando = null, codiceInstallato = ATTUALE.codice, ultimoControllo = 0;
 const OGNI_CONTROLLO = 6 * 3600e3;
 const rimandatoOra = async u => { const r = await archivio.leggiMeta('aggRimandato'); return r?.versione === u.versione && r.fino > adesso(); };
 async function controllaAggiornamenti(manuale = false) {
   if (!N.nativo) return null;
   codiceInstallato = (await N.infoApp().catch(() => null))?.codice || ATTUALE.codice;
+  ultimoControllo ||= (await archivio.leggiMeta('aggControllo')) || 0;
   // Un aggiornamento già trovato resta segnalato anche riaprendo l'app (senza chiedere di nuovo a GitHub).
   const trovato = await archivio.leggiMeta('aggTrovato');
   if (!aggiornamento && trovato?.codice > codiceInstallato && !(await rimandatoOra(trovato))) { aggiornamento = trovato; disegna(); }
   if (!manuale && adesso() - ((await archivio.leggiMeta('aggControllo')) || 0) < OGNI_CONTROLLO) return aggiornamento;
   try {
     const u = await cercaAggiornamento(MARCHIO.repository, codiceInstallato);
-    await archivio.scriviMeta('aggControllo', adesso());
+    await archivio.scriviMeta('aggControllo', ultimoControllo = adesso());
     aggiornamento = u && (manuale || !(await rimandatoOra(u))) ? u : null;
     if (u) await archivio.scriviMeta('aggTrovato', u);
     disegna();
@@ -549,7 +550,7 @@ function vistaImpostazioni() {
 
     <div class="sez">Aggiornamenti</div>
     <div class="pannello">
-      <div class="voce"><div>${MARCHIO.nome} ${ATTUALE.versione}<small>${aggiornamento ? `È pronta la ${esc(aggiornamento.versione)}` : N.nativo ? 'Controllo da solo ogni 6 ore' : 'La versione web si aggiorna da sola'}</small></div>
+      <div class="voce"><div>${MARCHIO.nome} ${ATTUALE.versione}<small>${aggiornamento ? `È pronta la ${esc(aggiornamento.versione)}` : N.nativo ? (ultimoControllo ? `Ultimo controllo: ${giornoBreve(dataNelFuso(ultimoControllo, cfg.fuso)).toLowerCase()} alle ${new Date(ultimoControllo).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}` : 'Controllo da solo ogni 6 ore') : 'La versione web si aggiorna da sola'}</small></div>
         ${N.nativo ? `<button class="btn ${aggiornamento ? 'primario' : ''}" id="iAggiorna" style="flex:none;padding:9px 14px">${aggiornamento ? 'Aggiorna' : 'Controlla'}</button>` : ''}</div>
       <div class="voce cliccabile" id="iNovita"><div>Cosa c'è di nuovo<small>Le novità delle ultime versioni</small></div>${icona('dx')}</div>
     </div>

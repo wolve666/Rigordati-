@@ -3,6 +3,13 @@
 // Per una nuova versione: aggiungi una voce IN CIMA con codice +1.
 export const NOVITA = [
   {
+    versione: '0.3.1', codice: 5, data: '2026-11-19',
+    cose: [
+      'Prima versione arrivata con l\'aggiornamento dall\'app',
+      'In Impostazioni › Aggiornamenti vedi quando ho controllato l\'ultima volta'
+    ]
+  },
+  {
     versione: '0.3.0', codice: 4, data: '2026-11-19',
     cose: [
       'Avvisi di aggiornamento: quando esce una nuova versione te lo dico io, con le novità',

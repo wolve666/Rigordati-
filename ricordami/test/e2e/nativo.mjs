@@ -37,7 +37,7 @@ const FINTO = () => {
   // addListener vero: conservo la funzione per poter simulare gli eventi
   for (const n of nomi) Plugins[n].addListener = async (evento, fn) => { (ascolti[`${n}.${evento}`] ||= []).push(fn); return { remove() {} }; };
   // Aggiornamenti: app installata 0.3.0 (codice 4); il download avanza e poi apre l'installazione.
-  Plugins.Aggiornamento.info = async () => ({ versione: '0.3.0', codice: 4, puoInstallare: true });
+  Plugins.Aggiornamento.info = async () => ({ ...window.__installata, puoInstallare: true });
   Plugins.Aggiornamento.scaricaEInstalla = async arg => {
     chiamate.push({ plugin: 'Aggiornamento', metodo: 'scaricaEInstalla', arg });
     for (const p of [10, 45, 80, 100]) { await new Promise(r => setTimeout(r, 120)); (ascolti['Aggiornamento.avanzamento'] || []).forEach(f => f({ percento: p })); }
@@ -56,10 +56,14 @@ await ctx.route('https://fonts.googleapis.com/**', r => r.fulfill({ contentType:
 await ctx.addInitScript(FINTO);
 // GitHub finto: è appena uscita la 0.3.1
 const { testoRelease } = await import('../../js/aggiornamenti.js');
+const { ATTUALE } = await import('../../js/novita.js');
+// Versione installata = quella attuale; su GitHub ce n'è una "successiva" finta.
+const [M, m, p] = ATTUALE.versione.split('.').map(Number), PROSSIMA = `${M}.${m}.${p + 1}`, PROSSIMO_CODICE = ATTUALE.codice + 1;
+await ctx.addInitScript(([v, c]) => { window.__installata = { versione: v, codice: c }; }, [ATTUALE.versione, ATTUALE.codice]);
 await ctx.route('https://api.github.com/**', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify([{
-  tag_name: 'ricordami-v0.3.1', draft: false, prerelease: false, html_url: 'https://github.com/x/y/releases/tag/ricordami-v0.3.1', published_at: '2026-11-20T09:00:00Z',
-  body: testoRelease({ versione: '0.3.1', codice: 5, data: '2026-11-20', cose: ['Promemoria con le foto', 'Widget sulla schermata Home'] }, 'cd'.repeat(32)),
-  assets: [{ name: 'RicordaMi-0.3.1.apk', size: 6_100_000, browser_download_url: 'https://github.com/x/y/releases/download/ricordami-v0.3.1/RicordaMi-0.3.1.apk' }]
+  tag_name: `ricordami-v${PROSSIMA}`, draft: false, prerelease: false, html_url: `https://github.com/x/y/releases/tag/ricordami-v${PROSSIMA}`, published_at: '2026-11-20T09:00:00Z',
+  body: testoRelease({ versione: PROSSIMA, codice: PROSSIMO_CODICE, data: '2026-11-20', cose: ['Promemoria con le foto', 'Widget sulla schermata Home'] }, 'cd'.repeat(32)),
+  assets: [{ name: `RicordaMi-${PROSSIMA}.apk`, size: 6_100_000, browser_download_url: `https://github.com/x/y/releases/download/ricordami-v${PROSSIMA}/RicordaMi-${PROSSIMA}.apk` }]
 }]) }));
 const page = await ctx.newPage();
 const errori = [];
@@ -133,14 +137,14 @@ passo('tasto indietro: chiude la finestra, torna al calendario, poi esce dall\'a
 
 // Aggiornamento: avviso con le novità, pallino sulle impostazioni, download con avanzamento
 await page.locator('#cartaAgg').waitFor({ timeout: 5000 });
-assert.match(await page.locator('#cartaAgg').innerText(), /È pronta la versione 0\.3\.1[\s\S]*5,8 MB[\s\S]*Promemoria con le foto/);
+assert.match(await page.locator('#cartaAgg').innerText(), new RegExp(`È pronta la versione ${PROSSIMA.replace(/\./g, '\\.')}[\\s\\S]*5,8 MB[\\s\\S]*Promemoria con le foto`));
 assert.equal(await page.locator('#btnImp.nuovo').count(), 1, 'pallino sulle impostazioni');
 await page.screenshot({ path: process.env.FOTO_AGG || '/dev/null' }).catch(() => {});
 await page.click('#aggOra');
 await page.waitForFunction(() => /Conferma l'installazione/.test(document.getElementById('cartaAgg')?.innerText || ''), null, { timeout: 5000 });
 const scarica = (await chiamate('Aggiornamento', 'scaricaEInstalla'))[0].arg;
-assert.match(scarica.url, /RicordaMi-0\.3\.1\.apk$/); assert.equal(scarica.sha256, 'cd'.repeat(32));
-passo('aggiornamento: "È pronta la 0.3.1" con novità e peso, download con avanzamento, installazione con controllo SHA-256');
+assert.ok(scarica.url.endsWith(`RicordaMi-${PROSSIMA}.apk`)); assert.equal(scarica.sha256, 'cd'.repeat(32));
+passo(`aggiornamento: "È pronta la ${PROSSIMA}" con novità e peso, download con avanzamento, installazione con controllo SHA-256`);
 
 // "Più tardi": la scheda sparisce per un giorno ma l'aggiornamento resta in Impostazioni
 await page.reload();
@@ -157,11 +161,11 @@ await page.click('.tab[data-v="v-cal"]');
 passo('"Più tardi": rimandato di un giorno, ma da Impostazioni si ritrova e si aggiorna');
 
 // Dopo un aggiornamento: "Cosa c'è di nuovo", una volta sola
-await page.evaluate(async () => (await import('./js/archivio.js')).archivio.scriviMeta('versioneVista', 3));
+await page.evaluate(async c => (await import('./js/archivio.js')).archivio.scriviMeta('versioneVista', c), ATTUALE.codice - 1);
 await page.reload();
 await page.locator('#fNovita.on').waitFor({ timeout: 5000 });
-assert.match(await page.locator('#nTitolo').innerText(), /Benvenuta la 0\.3\.0/);
-assert.match(await page.locator('#nCorpo').innerText(), /Avvisi di aggiornamento/);
+assert.equal(await page.locator('#nTitolo').innerText(), `Benvenuta la ${ATTUALE.versione}!`);
+assert.ok((await page.locator('#nCorpo').innerText()).includes(ATTUALE.cose[0]));
 await page.click('#nOk');
 await page.reload(); await page.locator('#v-cal.attiva .griglia').waitFor(); await page.waitForTimeout(500);
 assert.equal(await page.locator('#fNovita.on').count(), 0, 'una volta sola');

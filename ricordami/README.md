@@ -3,7 +3,7 @@
 **Le cose importanti, al momento giusto.**
 Promemoria che capiscono come parli, avvisano quando serve e insistono finché non hai fatto. Nato dal nucleo di [Rigordati!!](../README.md), pensato per essere venduto. Gira come **app Android** (APK) e come app web.
 
-Versione **v0.3.0** (si cambia in `js/novita.js`) · Documento di prodotto: [docs/PRODOTTO.md](docs/PRODOTTO.md) · Anteprime: [docs/anteprime/](docs/anteprime/)
+Versione **v0.3.1** (si cambia in `js/novita.js`) · Documento di prodotto: [docs/PRODOTTO.md](docs/PRODOTTO.md) · Anteprime: [docs/anteprime/](docs/anteprime/)
 
 ## Com'è fatta
 

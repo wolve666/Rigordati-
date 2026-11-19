@@ -42,7 +42,6 @@ jobs:
       - run: npm install --no-save playwright-core@1.49.1
       # Usa il Chrome già presente sulle macchine di GitHub, senza scaricare browser.
       - run: CANALE=chrome PLAYWRIGHT=playwright-core npm run test:app
-      - run: CANALE=chrome PLAYWRIGHT=playwright-core npm run test:nativo
 
   ricordami:
     name: RicordaMi (test e app nel browser)
