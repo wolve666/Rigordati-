@@ -53,5 +53,16 @@ jobs:
             echo "La release $TAG esiste già: niente da pubblicare."
           else
             node scripts/rilascio.mjs testo "RicordaMi-$VERSIONE.apk" > note.md
-            gh release create "$TAG" "RicordaMi-$VERSIONE.apk" --title "RicordaMi $VERSIONE" --notes-file note.md --target "$GITHUB_SHA"
+            gh release create "$TAG" "RicordaMi-$VERSIONE.apk" --title "RicordaMi $VERSIONE" --notes-file note.md --target "$GITHUB_SHA" --latest=false # "ultima release" resta di Rigordati, che legge releases/latest
           fi
+      # Rigordati controlla gli aggiornamenti con releases/latest: quella deve restare sempre
+      # la sua release più nuova (tag vX.Y.Z), mai una di RicordaMi (tag ricordami-vX.Y.Z).
+      - name: L'"ultima release" resta di Rigordati
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RIG=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          ORA=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name || true)
+          echo "Ultima di Rigordati: $RIG — ultima per GitHub: $ORA"
+          if [ -n "$RIG" ] && [ "$RIG" != "$ORA" ]; then gh release edit "$RIG" --repo "$GITHUB_REPOSITORY" --latest; fi
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)" = "${RIG:-$ORA}"
