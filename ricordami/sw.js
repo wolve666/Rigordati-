@@ -6,7 +6,7 @@ import { controlla, bollino } from './js/pianificatore.js';
 const CACHE = 'ricordami-' + MARCHIO.versione;
 const GUSCIO = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
-  './js/app.js', './js/novita.js', './js/aggiornamenti.js', './js/famiglia.js', './js/archivio.js', './js/pianificatore.js', './js/profili.js', './js/marchio.js', './js/ics.js', './js/nativo.js',
+  './js/app.js', './js/novita.js', './js/aggiornamenti.js', './js/famiglia.js', './js/archivio.js', './js/pianificatore.js', './js/profili.js', './js/marchio.js', './js/ics.js', './js/nativo.js', './js/blocco.js', './font/caveat.woff2',
   './js/nucleo/capisci.js', './js/nucleo/date.js', './js/nucleo/ricorrenze.js',
   './icone/icona-64.png', './icone/icona-192.png', './icone/icona-512.png', './icone/bollino-96.png'
 ];

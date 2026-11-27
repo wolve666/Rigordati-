@@ -119,7 +119,33 @@ await aspetta(A.page, () => document.getElementById('bnTitolo').textContent === 
 await A.page.click('#bnChiudi');
 passo('"Comprare il latte" condiviso; Bruno lo spunta e Anna riceve "✅ Bruno ha fatto"');
 
-/* ---------- senza rete: la risposta parte quando torna ---------- */
+/* ---------- foglietto della spesa in comune ---------- */
+await A.page.click('.tab[data-v="v-liste"]');
+await A.page.click('.carta-blocco');
+await A.page.locator('#fBlocco.on').waitFor();
+await A.page.click('#bkModifica');
+await A.page.locator('#fLista.on').waitFor();
+await A.page.click('#lGruppo .chip:has-text("Casa Rossi")');
+await A.page.click('#lSalva');
+await A.page.click('.carta-blocco');
+await A.page.fill('#bkNuova', 'pane, mozzarella e basilico'); await A.page.press('#bkNuova', 'Enter');
+await A.page.waitForFunction(() => document.querySelectorAll('#bkVoci li').length === 3);
+await aspetta(B.page, () => document.getElementById('bnTitolo').textContent === '🛒 Anna ha aggiunto alla lista');
+assert.equal(await B.page.locator('#bnCorpo').innerText(), 'Pane, Mozzarella, Basilico', 'un avviso solo per tre cose');
+await B.page.click('#bnChiudi');
+await B.page.click('.tab[data-v="v-liste"]');
+assert.match(await B.page.locator('.carta-blocco').innerText(), /3 da prendere[\s\S]*Casa Rossi/);
+await B.page.click('.carta-blocco');
+await B.page.locator('#bkVoci li', { hasText: 'Mozzarella' }).dblclick();
+await aspetta(A.page, () => document.querySelector('#bkVoci li.fatto')?.textContent.includes('Mozzarella'));
+await A.page.waitForTimeout(400);
+await foto(A.page, '64-famiglia-spesa');
+await A.page.click('#velo', { position: { x: 20, y: 20 } }); await B.page.click('#velo', { position: { x: 20, y: 20 } });
+await A.page.click('.tab[data-v="v-fam"]'); await B.page.click('.tab[data-v="v-fam"]');
+assert.match(await A.page.locator('.carta-spesa-fam').innerText(), /2 da prendere/, 'in Famiglia si vede la spesa in comune');
+passo('Spesa condivisa: Anna scrive, Bruno riceve un avviso solo, depenna la mozzarella e Anna la vede depennata');
+
+
 await A.page.click('#btnNuovo');
 await A.page.fill('#sTesto', 'Stasera pizza?');
 await A.page.click('#sSalva');

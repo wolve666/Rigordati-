@@ -3,5 +3,5 @@
 import { rmSync, mkdirSync, cpSync } from 'node:fs';
 rmSync('www', { recursive: true, force: true });
 mkdirSync('www');
-for (const f of ['index.html', 'manifest.webmanifest', 'css', 'js', 'icone']) cpSync(f, `www/${f}`, { recursive: true });
+for (const f of ['index.html', 'manifest.webmanifest', 'css', 'js', 'icone', 'font']) cpSync(f, `www/${f}`, { recursive: true });
 console.log('www/ pronta');

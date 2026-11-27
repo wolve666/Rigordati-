@@ -11,6 +11,7 @@ import * as N from './nativo.js';
 import { famiglia, fraseEvento } from './famiglia.js';
 import { NOVITA, ATTUALE } from './novita.js';
 import { cerca as cercaAggiornamento } from './aggiornamenti.js';
+import { eBlocco, rigaDelBlocco, dividi, segno } from './blocco.js';
 
 /* ---------- chi è chi (famiglia) ---------- */
 const ioId = () => famiglia.io?.id;
@@ -85,6 +86,17 @@ function descriviRipeti(r, data) {
 /* ---------- caricamento ---------- */
 async function ricarica() {
   [lista, liste, cfg] = await Promise.all([archivio.promemoria(), archivio.liste(), archivio.impostazioni()]);
+  // Un foglietto condiviso da un altro telefono: se qui la lista non c'è, la creo uguale.
+  const mancanti = new Map(lista.filter(p => p.tipo === 'voce' && p.lista && p.listaNome && !liste.some(l => l.id === p.lista)).map(p => [p.lista, p]));
+  if (mancanti.size) {
+    for (const [id, p] of mancanti) await archivio.salvaLista({ id, nome: p.listaNome, emoji: p.listaEmoji || '🛒', colore: 'sole', blocco: true, gruppo: p.gruppo || '', ordine: liste.length });
+    liste = await archivio.liste();
+  }
+  // La "Spesa" c'è su ogni telefono: se un altro della famiglia ci scrive, qui diventa condivisa (se non l'hai già deciso tu).
+  for (const l of liste.filter(l => !l.gruppo && !l.gruppoScelto)) {
+    const da = lista.find(p => p.tipo === 'voce' && p.lista === l.id && p.gruppo && !mio(p));
+    if (da) { await archivio.salvaLista({ ...l, gruppo: da.gruppo, blocco: true }); liste = await archivio.liste(); }
+  }
   disegna();
 }
 archivio.ascolta(() => ricarica().then(riprogramma));
@@ -148,6 +160,7 @@ function disegna() {
   $('btnImp').classList.toggle('nuovo', !!aggiornamento);
   const nAttesa = lista.filter(inAttesa).length;
   $('bollinoFam').hidden = !nAttesa; $('bollinoFam').textContent = nAttesa;
+  if (foglio === 'fBlocco') disegnaBlocco();
   ({ 'v-oggi': vistaOggi, 'v-cal': vistaCalendario, 'v-fam': vistaFamiglia, 'v-liste': vistaListe, 'v-imp': vistaImpostazioni, 'v-cerca': vistaCerca })[vista]();
   aggiornaBollino();
 }
@@ -208,7 +221,7 @@ function vistaOggi() {
   const dDomani = ag.filter(x => x.occ === dom && !x.fatto);
   const settimana = primaPerVoce(ag.filter(x => x.occ > dom && x.occ <= piuGiorni(o, 7) && !x.fatto));
   const avanti = primaPerVoce(ag.filter(x => x.occ > piuGiorni(o, 7) && !x.fatto));
-  const libere = lista.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda').sort((a, b) => (b.priorita || 0) - (a.priorita || 0) || b.creato - a.creato).map(senzaData);
+  const libere = lista.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda' && !rigaDelBlocco(p, liste)).sort((a, b) => (b.priorita || 0) - (a.priorita || 0) || b.creato - a.creato).map(senzaData);
   let h = cartaAggiornamento();
   const tutto = ritardo.length + dOggi.length + dDomani.length + settimana.length + avanti.length + libere.length;
   if (!tutto) h += vuoto('Niente da ricordare', 'Tocca + e scrivi come parli: "domani alle 9 chiamare Marco".');
@@ -267,7 +280,7 @@ function attiviDiLista(id) {
   const rit = inRitardo(lista, ora, cfg).filter(x => x.p.lista === id);
   const inR = new Set(rit.map(x => x.p.id + x.occ));
   const fut = primaPerVoce(agenda(lista.filter(p => p.lista === id), o, piuGiorni(o, 366), cfg).filter(x => !x.fatto && !inR.has(x.p.id + x.occ)));
-  const lib = lista.filter(p => p.lista === id && !p.data && !p.fatto).map(senzaData);
+  const lib = lista.filter(p => p.lista === id && !p.data && !p.fatto && !rigaDelBlocco(p, liste)).map(senzaData);
   return { rit, fut, lib, n: rit.length + fut.length + lib.length };
 }
 
@@ -285,10 +298,18 @@ function vistaListe() {
     return;
   }
   $('v-liste').innerHTML = `<div class="griglia-liste">${liste.map(l => {
+    if (eBlocco(l)) {
+      const v = vociBlocco(l.id), resta = v.filter(p => !p.fatto).length;
+      return `<button class="carta-lista carta-blocco" data-blocco="${esc(l.id)}"><span class="legatura" aria-hidden="true"><i></i><i></i></span>
+        <b>${esc(l.emoji)} ${esc(l.nome)}</b>
+        <span class="anteprima">${v.slice(0, 3).map(p => `<span class="${p.fatto ? 'fatto' : ''}">${esc(p.titolo)}</span>`).join('') || '<span class="vuota">da scrivere…</span>'}</span>
+        <small>${resta ? `${resta} da prendere` : v.length ? 'Tutto preso!' : 'Tocca per scrivere'}${l.gruppo && famiglia.gruppo(l.gruppo) ? ` · 👪 ${esc(famiglia.gruppo(l.gruppo).nome)}` : ''}</small></button>`;
+    }
     const n = attiviDiLista(l.id).n;
     return `<button class="carta-lista" data-l="${esc(l.id)}" style="--colore-lista:var(--c-${l.colore})"><span class="emoji">${esc(l.emoji)}</span><div><b>${esc(l.nome)}</b><br><small>${n ? `${n} da ricordare` : 'Niente in sospeso'}</small></div></button>`;
   }).join('')}<button class="carta-lista nuova" id="lNuova">${icona('piu')}<small>Nuova lista</small></button></div>`;
   $('v-liste').querySelectorAll('[data-l]').forEach(b => b.onclick = () => { listaAperta = b.dataset.l; disegna(); aggiornaStoria(); $('contenuto').scrollTop = 0; });
+  $('v-liste').querySelectorAll('[data-blocco]').forEach(b => b.onclick = () => apriBlocco(b.dataset.blocco, b));
   $('lNuova').onclick = () => apriFoglioLista(null);
 }
 
@@ -405,7 +426,8 @@ function vistaFamiglia() {
   const attesa = domande.filter(inAttesa), altre = domande.filter(p => !inAttesa(p));
   const o = oggiIso();
   const prossimi = primaPerVoce(agenda(delGruppo.filter(p => p.tipo !== 'domanda'), o, piuGiorni(o, 30), cfg).filter(x => !x.fatto)).slice(0, 8);
-  const daFare = delGruppo.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda').map(senzaData);
+  const daFare = delGruppo.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda' && !rigaDelBlocco(p, liste)).map(senzaData);
+  const spesaComune = delGruppo.filter(p => rigaDelBlocco(p, liste) && !p.fatto);
   const fa = t => { const m = Math.round((adesso() - t) / 60000); return m < 1 ? 'adesso' : m < 60 ? `${m} min fa` : m < 1440 ? `${Math.round(m / 60)} h fa` : giornoBreve(dataNelFuso(t, cfg.fuso)); };
   const tuttiEventi = famiglia.eventi.filter(e => e.gruppo === g.id).slice(-30).reverse();
   const eventi = attivitaTutta ? tuttiEventi : tuttiEventi.slice(0, 4);
@@ -418,10 +440,12 @@ function vistaFamiglia() {
     ${gruppo('Domande', altre.map(p => riga(senzaData(p))))}
     ${gruppo('In programma insieme', prossimi.map(x => riga(x, { mostraGiorno: true })))}
     ${gruppo('Da fare insieme', daFare.map(x => riga(x)))}
+    ${spesaComune.length ? `<button class="carta-spesa-fam" data-blocco="${esc(spesaComune[0].lista)}">🛒 <b>${esc(listaDi(spesaComune[0].lista)?.nome || 'Spesa')}</b> · ${spesaComune.length} da prendere<span>${esc(spesaComune.slice(0, 4).map(p => p.titolo).join(', '))}${spesaComune.length > 4 ? '…' : ''}</span></button>` : ''}
     ${!domande.length && !prossimi.length && !daFare.length ? vuoto('Ancora niente in comune', 'Tocca + e scegli "Con chi": ' + esc(g.nome) + '. Con un punto di domanda diventa una domanda.') : ''}
     ${eventi.length ? `<div class="gruppo"><div class="gruppo-titolo">Attività</div><div class="lista-righe feed">${eventi.map(e => { const f = fraseEvento(e, ioId()); return `<div class="ev">${avatar(g.id, e.da, 'piccolo')}<div><b>${esc(f.titolo)}</b> ${esc(f.corpo)}<small>${fa(e.creato)}</small></div></div>`; }).join('')}</div>${tuttiEventi.length > eventi.length ? '<button class="altro-btn" id="fAttivitaTutta">Mostra tutta l\'attività</button>' : ''}</div>` : ''}
     <div class="chips" style="justify-content:center;margin-top:8px"><button class="chip" id="fAltro">+ Altra famiglia o gruppo</button><button class="chip" id="fRinomina">Rinomina</button><button class="chip" id="fEsci">Esci dal gruppo</button></div>`;
   el.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { gruppoAperto = b.dataset.g; vistaFamiglia(); });
+  el.querySelectorAll('[data-blocco]').forEach(b => b.onclick = () => apriBlocco(b.dataset.blocco, b));
   $('fInvita').onclick = () => azioneFam(async () => {
     const { codice } = await famiglia.invita(g.id);
     invitoMostrato = { g: g.id, codice };
@@ -480,7 +504,7 @@ $('dModifica').onclick = () => { const p = lista.find(x => x.id === dv); chiudiF
 
 function vistaCerca() {
   const q = ricerca.trim().toLowerCase();
-  const trovati = q ? lista.filter(p => (p.titolo + ' ' + (p.note || '')).toLowerCase().includes(q)) : [];
+  const trovati = q ? lista.filter(p => !rigaDelBlocco(p, liste) && (p.titolo + ' ' + (p.note || '')).toLowerCase().includes(q)) : [];
   const o = oggiIso();
   const righe = trovati.map(p => {
     const occ = p.data ? prossimaData(p, o) || p.data : '';
@@ -627,7 +651,7 @@ function applicaAspetto(ev) {
     N.barraStato(scuro, sfondo);
   };
   if (cfg.tema === 'allegro' && !document.getElementById('fontAllegro'))
-    document.head.append(Object.assign(document.createElement('link'), { id: 'fontAllegro', rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@400;500;600;700&display=swap' }));
+    document.head.append(Object.assign(document.createElement('link'), { id: 'fontAllegro', rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap' }));
   try { localStorage.setItem('ricordami-aspetto', JSON.stringify({ tema: cfg.tema, modo: cfg.modo, animazioni: cfg.animazioni })); } catch {}
   const diverso = r.dataset.tema !== cfg.tema || ('scuro' in r.dataset) !== scuro;
   if (ev && diverso && document.startViewTransition && animazioni()) {
@@ -962,12 +986,24 @@ function apriFoglioLista(l) {
     $('lColori').querySelectorAll('button').forEach(b => b.onclick = () => { lv.colore = b.dataset.c; colori(); });
   };
   colori();
+  $('lBlocco').checked = eBlocco(l || lv);
+  const conChi = () => {
+    const gruppi = famiglia.attivo ? famiglia.gruppi : [];
+    $('lCondividiCampo').hidden = !gruppi.length || !$('lBlocco').checked;
+    $('lGruppo').innerHTML = `<button class="chip ${!lv.gruppo ? 'sel' : ''}" data-g="">Solo io</button>` + gruppi.map(g => `<button class="chip ${lv.gruppo === g.id ? 'sel' : ''}" data-g="${esc(g.id)}">👪 ${esc(g.nome)}</button>`).join('');
+    $('lGruppo').querySelectorAll('button').forEach(b => b.onclick = () => { lv.gruppo = b.dataset.g; conChi(); });
+  };
+  $('lBlocco').onchange = conChi; conChi();
   apriFoglio('fLista');
   if (!l) setTimeout(() => $('lNome').focus(), 320);
 }
 $('lSalva').onclick = async () => {
   if (!$('lNome').value.trim()) return $('lNome').focus();
-  await archivio.salvaLista({ ...lv, nome: $('lNome').value.trim(), emoji: $('lEmoji').value.trim() || '📌', ordine: lv.ordine ?? liste.length });
+  const blocco = $('lBlocco').checked, gruppoLista = blocco ? lv.gruppo || '' : '';
+  const salvata = await archivio.salvaLista({ ...lv, nome: $('lNome').value.trim(), emoji: $('lEmoji').value.trim() || '📌', ordine: lv.ordine ?? liste.length, blocco, gruppo: gruppoLista, gruppoScelto: true });
+  // Condivisa ora: le righe già scritte passano alla famiglia insieme alle nuove.
+  if (gruppoLista) for (const p of lista.filter(p => p.lista === salvata.id && rigaDelBlocco(p, liste) && p.gruppo !== gruppoLista))
+    await archivio.salva({ ...p, tipo: 'voce', gruppo: gruppoLista, listaNome: salvata.nome, listaEmoji: salvata.emoji });
   chiudiFoglio();
 };
 $('lElimina').onclick = async () => {
@@ -977,6 +1013,74 @@ $('lElimina').onclick = async () => {
   await archivio.eliminaLista(lv.id);
   chiudiFoglio(); listaAperta = null; disegna(); aggiornaStoria();
 };
+
+/* ---------- foglietto della spesa ---------- */
+let bloccoId = null, appenaDepennato = null, ultimoTocco = null, aiutoDato = false;
+const vociBlocco = id => lista.filter(p => p.lista === id && rigaDelBlocco(p, liste)).sort((a, b) => a.creato - b.creato);
+function apriBlocco(id, origine) {
+  bloccoId = id; disegnaBlocco();
+  const vuoto_ = !vociBlocco(id).length;
+  apriFoglio('fBlocco', origine).then(() => { if (vuoto_ && foglio === 'fBlocco') $('bkNuova').focus({ preventScroll: true }); });
+}
+function disegnaBlocco() {
+  const l = listaDi(bloccoId); if (!l) return chiudiFoglio();
+  const voci = vociBlocco(bloccoId), depennati = voci.filter(p => p.fatto).length;
+  $('bkTitolo').textContent = `${l.emoji} ${l.nome}`;
+  $('bkVoci').innerHTML = voci.map(p => `<li data-id="${esc(p.id)}" class="${p.fatto ? 'fatto' : ''}"><span class="parola">${esc(p.titolo)}${p.gruppo && !mio(p) ? `<small> ${esc(p.autore?.nome || '')}</small>` : ''}</span></li>`).join('');
+  $('bkTogli').disabled = !depennati;
+  $('bkTogli').textContent = depennati ? `Togli i depennati (${depennati})` : 'Togli i depennati';
+  $('bkCondividi').disabled = !voci.some(p => !p.fatto);
+  $('bkAiuto').hidden = voci.length > 2;
+  // La cancellatura si disegna sopra la parola, della sua misura.
+  requestAnimationFrame(() => $('bkVoci').querySelectorAll('li.fatto').forEach(li => {
+    const p = voci.find(x => x.id === li.dataset.id), parola = li.querySelector('.parola');
+    const w = parola.offsetWidth, h = parola.offsetHeight, { d } = segno(p.segno ?? (parseInt(p.id.slice(-5), 36) % 997) / 997, w, h);
+    const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'cancellatura' + (appenaDepennato === p.id && animazioni() ? ' disegna' : ''));
+    svg.setAttribute('viewBox', `-12 0 ${w + 24} ${h}`); svg.style.width = (w + 24) + 'px';
+    const path = document.createElementNS(ns, 'path'); path.setAttribute('d', d); path.setAttribute('pathLength', '1');
+    svg.append(path); parola.append(svg);
+  }));
+  appenaDepennato = null;
+}
+async function depenna(id) {
+  const p = lista.find(x => x.id === id); if (!p) return;
+  const fatto = !p.fatto;
+  if (fatto) appenaDepennato = id;
+  N.vibra('leggero');
+  // seme nuovo a ogni cancellatura: la penna non fa mai due volte lo stesso segno
+  await archivio.salva({ ...p, fatto, fattoIl: fatto ? adesso() : null, segno: fatto ? Math.random() : undefined });
+}
+$('bkVoci').addEventListener('pointerup', e => {
+  const li = e.target.closest('li[data-id]'); if (!li) return;
+  const t = performance.now();
+  if (ultimoTocco && ultimoTocco.id === li.dataset.id && t - ultimoTocco.t < 380) { ultimoTocco = null; depenna(li.dataset.id); return; }
+  ultimoTocco = { id: li.dataset.id, t };
+  if (!aiutoDato) setTimeout(() => { if (ultimoTocco?.t === t && !aiutoDato) { aiutoDato = true; toast('Tocca due volte per depennare'); } }, 420);
+});
+$('bkVoci').addEventListener('dblclick', e => e.preventDefault());
+async function aggiungiAlBlocco() {
+  const l = listaDi(bloccoId), cose = dividi($('bkNuova').value);
+  if (!l || !cose.length) return;
+  $('bkNuova').value = '';
+  const base = Math.max(Date.now(), ...vociBlocco(l.id).map(p => p.creato + 1)); // sempre in fondo al foglietto
+  for (const [i, titolo] of cose.entries())
+    await archivio.salva({ tipo: 'voce', titolo, data: '', ora: '', lista: l.id, gruppo: l.gruppo && famiglia.gruppo(l.gruppo) ? l.gruppo : '', listaNome: l.nome, listaEmoji: l.emoji, creato: base + i, avvisi: [], insisti: 0, priorita: 0 });
+  N.vibra('leggero');
+  requestAnimationFrame(() => $('bkNuova').scrollIntoView({ block: 'nearest' }));
+}
+$('bkNuova').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); aggiungiAlBlocco(); } };
+$('bkNuova').onblur = () => aggiungiAlBlocco(); // quello che hai scritto non va perso
+$('bkTogli').onclick = async () => {
+  const via = vociBlocco(bloccoId).filter(p => p.fatto);
+  for (const p of via) await archivio.elimina(p.id);
+  toast(via.length === 1 ? 'Tolto dal foglietto' : `Tolti ${via.length} dal foglietto`, 'Annulla', async () => { for (const p of via) await archivio.salva(p); });
+};
+$('bkCondividi').onclick = () => {
+  const l = listaDi(bloccoId);
+  condividiTesto(`${l.emoji} ${l.nome}\n` + vociBlocco(bloccoId).filter(p => !p.fatto).map(p => `– ${p.titolo}`).join('\n'));
+};
+$('bkModifica').onclick = () => apriFoglioLista(listaDi(bloccoId));
 
 /* ---------- ricerca ---------- */
 let vistaPrimaDiCercare = CASA;
@@ -1116,9 +1220,9 @@ function esempi() {
     { ...base, titolo: 'Pagare la bolletta della luce', data: piuGiorni(o, 3), ora: '', lista: 'scadenze', priorita: 1, avvisi: [1440, 0] },
     { ...base, titolo: 'Palestra', data: o, ora: '18:30', lista: 'salute', ripeti: { ogni: 'settimana', ogniN: 1, giorni: [1, 4] } },
     { ...base, titolo: 'Chiamare la mamma', data: piuGiorni(o, (7 - giornoSettimana(o)) % 7), ora: '11:00', lista: 'personale', ripeti: { ogni: 'settimana', ogniN: 1 } },
-    { ...base, titolo: 'Latte, pane, uova', data: '', ora: '', lista: 'spesa' },
+    ...['Latte', 'Pane', 'Uova'].map(t => ({ tipo: 'voce', titolo: t, data: '', ora: '', lista: 'spesa' })),
     { ...base, titolo: 'Rinnovare la carta d\'identità', data: piuGiorni(o, 20), ora: '', lista: 'scadenze', avvisi: [10080, 1440] }
-  ].map((p, i) => ({ ...p, creato: Date.now() - i, ripeti: p.ripeti || null }));
+  ].map((p, i) => ({ ...p, creato: Date.now() - i * (p.tipo === 'voce' ? -1 : 1), ripeti: p.ripeti || null })); // le righe del foglietto restano nell'ordine scritto
 }
 
 /* ---------- link in ingresso: condividi, scorciatoie, altre app della suite ---------- */
@@ -1145,6 +1249,10 @@ function leggiIngresso() {
 // Avvisi delle novità della famiglia: "💬 Anna ti chiede", "✅ Bruno ha fatto"…
 function avvisaNovita(eventi) {
   ricarica();
+  // "🛒 Anna ha aggiunto" una volta sola per chi scrive tante cose di fila
+  const spesa = new Map();
+  for (const e of eventi.filter(e => e.tipo === 'spesa')) { const k = e.gruppo + e.da; spesa.set(k, [...(spesa.get(k) || []), e]); }
+  eventi = [...eventi.filter(e => e.tipo !== 'spesa'), ...[...spesa.values()].map(g => ({ ...g.at(-1), titolo: g.map(e => e.titolo).join(', ') }))];
   for (const e of eventi) {
     const f = fraseEvento(e, ioId());
     if (N.nativo) N.notificaSubito(f.titolo, f.corpo, { id: e.voce || '' });

@@ -130,7 +130,9 @@ export function creaApp(db, { adesso = () => Date.now(), avvisa = null } = {}) {
       else await db.esegui('INSERT INTO voci (id, gruppo, autore, dati, seq) VALUES (?, ?, ?, ?, ?)', id, gruppo, io.id, JSON.stringify(nuovi), seq);
       // Che cosa è successo, per avvisare gli altri
       const per = nuovi.perChi || [];
-      if (!prima || prima.eliminata) await evento(gruppo, id, nuovi.tipo === 'domanda' ? 'domanda' : 'nuova', io.id, per, nuovi.titolo);
+      // Le righe del foglietto della spesa: dico solo che sono state aggiunte, non ogni depennata.
+      if (nuovi.tipo === 'voce') { if (!prima || prima.eliminata) await evento(gruppo, id, 'spesa', io.id, [], nuovi.titolo); }
+      else if (!prima || prima.eliminata) await evento(gruppo, id, nuovi.tipo === 'domanda' ? 'domanda' : 'nuova', io.id, per, nuovi.titolo);
       else {
         const resto = d => JSON.stringify(Object.keys(d).sort().filter(k => !['fatto', 'fatti', 'fattoIl', 'risposte', 'aggiornato'].includes(k)).map(k => [k, d[k]]));
         const fattoOra = (!vecchi.fatto && nuovi.fatto) || Object.keys(nuovi.fatti || {}).some(k => nuovi.fatti[k] && !vecchi.fatti?.[k]);

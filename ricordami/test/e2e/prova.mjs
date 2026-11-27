@@ -77,7 +77,7 @@ passo('la prima pagina è il calendario');
 
 /* ---------- tasto indietro: chiude, torna al calendario, poi lascia uscire ---------- */
 await page.click('.tab[data-v="v-liste"]');
-await page.click('.carta-lista:has-text("Spesa")');
+await page.click('.carta-lista:has-text("Casa")');
 await page.click('#btnNuovo'); await vedi('#fScheda.on');
 await page.goBack(); await page.waitForFunction(() => !document.getElementById('fScheda').classList.contains('on'));
 await page.goBack(); await vedi('.carta-lista.nuova');
@@ -100,7 +100,7 @@ passo('il + apre una finestra che si allarga dal centro del pulsante, e la richi
 await page.click('.tab[data-v="v-oggi"]');
 await vedi('#v-oggi .gruppo.ritardo');
 assert.match(await testo('#g-ritardo'), /Restituire il libro a Giulia/);
-assert.match(await testo('#v-oggi'), /Latte, pane, uova/);
+assert.doesNotMatch(await testo('#v-oggi'), /Latte/, 'la spesa sta sul foglietto, non tra gli impegni');
 assert.equal(await page.locator('#v-oggi .stat, #v-oggi .prossimo').count(), 0, 'niente contatori né "Prossimo": solo la lista');
 assert.equal(await page.locator('#g-ritardo .riga-guscio').count(), 1);
 assert.ok(+(await page.textContent('#bollinoOggi')) >= 2, 'bollino sulla scheda Oggi');
@@ -180,6 +180,39 @@ assert.match(await testo('#v-liste'), /Pagare la bolletta/);
 await page.goBack();
 await vedi('.carta-lista.nuova');
 await foto('15-elegante-liste');
+
+/* ---------- foglietto della spesa ---------- */
+assert.match(await testo('.carta-blocco'), /Latte[\s\S]*Pane[\s\S]*Uova/);
+await page.click('.carta-blocco');
+await vedi('#fBlocco.on');
+assert.deepEqual(await page.locator('#bkVoci li').allInnerTexts(), ['Latte', 'Pane', 'Uova']);
+await page.fill('#bkNuova', 'mele, caffè e 2 limoni');
+await page.press('#bkNuova', 'Enter');
+await page.waitForFunction(() => document.querySelectorAll('#bkVoci li').length === 6);
+assert.deepEqual((await page.locator('#bkVoci li').allInnerTexts()).slice(3), ['Mele', 'Caffè', '2 limoni']);
+assert.equal(await page.evaluate(() => document.activeElement.id), 'bkNuova', 'si continua a scrivere al volo');
+const segni = [];
+for (const cosa of ['Pane', 'Mele', 'Caffè']) {
+  await page.locator('#bkVoci li', { hasText: cosa }).dblclick();
+  await page.locator('#bkVoci li.fatto', { hasText: cosa }).locator('svg.cancellatura path').waitFor();
+  segni.push(await page.locator('#bkVoci li', { hasText: cosa }).locator('path').getAttribute('d'));
+}
+assert.equal(new Set(segni).size, 3, 'ogni cancellatura è diversa');
+await page.waitForTimeout(450);
+await foto('17-foglietto-spesa');
+await page.locator('#bkVoci li', { hasText: 'Mele' }).dblclick(); // ripensamento: torna da prendere
+await page.waitForFunction(() => !document.querySelector('#bkVoci li.fatto .parola')?.textContent.startsWith('Mele') && document.querySelectorAll('#bkVoci li.fatto').length === 2);
+await page.click('#bkTogli');
+await page.waitForFunction(() => document.querySelectorAll('#bkVoci li').length === 4);
+assert.deepEqual(await page.locator('#bkVoci li').allInnerTexts(), ['Latte', 'Uova', 'Mele', '2 limoni']);
+await page.click('#toastAzione'); // Annulla
+await page.waitForFunction(() => document.querySelectorAll('#bkVoci li').length === 6);
+await page.click('#bkTogli');
+await page.waitForFunction(() => document.querySelectorAll('#bkVoci li').length === 4);
+await page.goBack();
+await page.waitForFunction(() => !document.getElementById('fBlocco').classList.contains('on'));
+assert.match(await testo('.carta-blocco'), /4 da prendere/);
+passo('foglietto della spesa: scrivi al volo, doppio tocco depenna con segni sempre diversi, togli i depennati');
 await page.click('#btnImp');
 await vedi('#iAvvisi');
 await foto('16-elegante-impostazioni');

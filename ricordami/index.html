@@ -150,12 +150,29 @@
   </div>
 </section>
 
+<!-- foglietto della spesa -->
+<section class="foglio blocco" id="fBlocco" role="dialog" aria-labelledby="bkTitolo">
+  <div class="legatura" aria-hidden="true"><i></i><i></i></div>
+  <div class="carta">
+    <div class="carta-testa"><h2 id="bkTitolo"></h2><button class="icona-btn piccolo" id="bkModifica" aria-label="Modifica la lista"><svg class="i"><use href="#i-imp"/></svg></button></div>
+    <ul class="righe-blocco" id="bkVoci"></ul>
+    <input class="scrivi-blocco" id="bkNuova" placeholder="scrivi qui…" maxlength="300" autocomplete="off" enterkeyhint="done" aria-label="Aggiungi alla lista">
+    <p class="aiuto-blocco" id="bkAiuto">Scrivi e premi invio. Con le virgole ne aggiungi tante insieme. Tocca due volte per depennare.</p>
+  </div>
+  <div class="azioni-blocco">
+    <button class="btn" id="bkTogli">Togli i depennati</button>
+    <button class="btn primario" id="bkCondividi">Condividi</button>
+  </div>
+</section>
+
 <!-- lista -->
 <section class="foglio" id="fLista" role="dialog" aria-labelledby="lIntestazione">
   <div class="maniglia"></div>
   <h2 id="lIntestazione">Nuova lista</h2>
   <div class="riga-campi"><input class="inserto" id="lEmoji" maxlength="4" style="flex:0 0 64px;text-align:center;font-size:1.4rem" value="📌"><input class="inserto" id="lNome" maxlength="40" placeholder="Nome della lista"></div>
   <div class="campo"><span class="etichetta">Colore</span><div class="chips" id="lColori"></div></div>
+  <label class="voce pannello" style="margin-top:14px"><div>Foglietto<small>Come una lista della spesa: scrivi al volo e depenni con due tocchi</small></div><span class="interruttore"><input type="checkbox" id="lBlocco"><span></span></span></label>
+  <div class="campo" id="lCondividiCampo" hidden><span class="etichetta">Con chi</span><div class="chips" id="lGruppo"></div></div>
   <div class="azioni-foglio"><button class="btn pericolo" id="lElimina" hidden>Elimina</button><button class="btn primario" id="lSalva">Salva</button></div>
 </section>
 

@@ -167,6 +167,7 @@ export function fraseEvento(e, io) {
   return ({
     domanda: { titolo: `💬 ${chi} ${perMe ? 'ti chiede' : 'chiede'}`, corpo: e.titolo },
     nuova: { titolo: `📌 ${chi} ha aggiunto${perMe ? ' per te' : ''}`, corpo: e.titolo },
+    spesa: { titolo: `🛒 ${chi} ha aggiunto alla lista`, corpo: e.titolo },
     modifica: { titolo: `✏️ ${chi} ha modificato`, corpo: e.titolo },
     risposta: { titolo: `💬 ${chi} ha risposto`, corpo: `${e.titolo} → ${e.testo}` },
     fatto: { titolo: `✅ ${chi} ha fatto`, corpo: e.titolo },
