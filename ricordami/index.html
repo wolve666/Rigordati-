@@ -26,7 +26,7 @@
   <symbol id="i-oggi" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
   <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="17" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></symbol>
   <symbol id="i-liste" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></symbol>
-  <symbol id="i-imp" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></symbol>
+  <symbol id="i-imp" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
   <symbol id="i-fam" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M15.8 14.4c2.9-.6 5.2 1.6 5.2 4.6"/></symbol>
   <symbol id="i-invia" viewBox="0 0 24 24"><path d="M4 12 20 4l-4 16-4-6.5z"/><path d="m12 13.5 8-9.5"/></symbol>
   <symbol id="i-piu" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
@@ -64,7 +64,7 @@
     <button class="tab attiva" data-v="v-cal"><svg class="i"><use href="#i-cal"/></svg>Calendario</button>
     <button class="tab" data-v="v-oggi"><svg class="i"><use href="#i-oggi"/></svg>Oggi<span class="bollino-tab" id="bollinoOggi" hidden></span></button>
     <button class="piu" id="btnNuovo" aria-label="Nuovo promemoria"><svg class="i"><use href="#i-piu"/></svg></button>
-    <button class="tab" data-v="v-fam"><svg class="i"><use href="#i-fam"/></svg><span id="tabFamNome">Famiglia</span><span class="bollino-tab" id="bollinoFam" hidden></span></button>
+    <button class="tab" data-v="v-fam"><svg class="i"><use href="#i-fam"/></svg>Famiglia<span class="bollino-tab" id="bollinoFam" hidden></span></button>
     <button class="tab" data-v="v-liste"><svg class="i"><use href="#i-liste"/></svg>Liste</button>
   </nav>
 </div>
@@ -77,12 +77,11 @@
   <h2 id="sIntestazione">Nuovo promemoria</h2>
   <textarea class="testo-grande" id="sTesto" rows="1" maxlength="300" placeholder="Cosa devo ricordarti?"></textarea>
   <div class="capito" id="sCapito"></div>
-  <div class="chips" id="sRapidi"></div>
+  <div class="campo campo-stretto"><span class="etichetta">Quando</span><div class="chips" id="sRapidi"></div></div>
   <div id="sCondividi" hidden>
-    <div class="campo"><span class="etichetta">Con chi</span><div class="chips" id="sGruppo"></div></div>
+    <div class="campo campo-stretto"><span class="etichetta">Con chi</span><div class="chips" id="sGruppo"></div></div>
     <div id="sCondivisoCampi" hidden>
-      <div class="campo"><span class="etichetta">Per chi</span><div class="chips" id="sPerChi"></div></div>
-      <div class="campo"><div class="segmenti" id="sTipo"><button data-t="promemoria">📌 Promemoria</button><button data-t="domanda">💬 Domanda</button></div></div>
+      <div class="campo campo-stretto"><div class="segmenti" id="sTipo"><button data-t="promemoria">📌 Promemoria</button><button data-t="domanda">💬 Domanda</button></div></div>
     </div>
   </div>
   <button class="dettagli-tog" id="sDettagliTog">Dettagli <svg class="i"><use href="#i-giu"/></svg></button>

@@ -2,6 +2,7 @@
 // La leggono l'app (marchio.js), l'APK (android/app/build.gradle) e GitHub (note della release).
 // Per una nuova versione: aggiungi una voce IN CIMA con codice +1.
 export const NOVITA = [
+  { versione: '0.4.0', codice: 6, data: '2026-11-27', cose: ['Oggi è più pulito: solo la lista, senza contatori e riquadri doppi', 'Nuovo promemoria più semplice: quello che ho capito in una frase, i campi in ordine, il tasto sempre in fondo', '"Con chi" in una riga sola: tocca una persona e il promemoria (o la domanda) è per lei', 'Famiglia più ordinata: il codice d\'invito si chiude dopo averlo condiviso, l\'attività è più corta', 'Impostazioni con l\'icona dell\'ingranaggio'] },
   {
     versione: '0.3.1', codice: 5, data: '2026-11-19',
     cose: [

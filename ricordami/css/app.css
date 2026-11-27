@@ -97,19 +97,7 @@ main { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px var
 @keyframes entra { from { opacity: 0; transform: translateY(10px); } }
 
 /* ---------- riepilogo in alto ---------- */
-.riassunto { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 4px 0 14px; }
-.stat { background: var(--superficie); border-radius: var(--raggio); padding: 12px 12px 10px; box-shadow: var(--ombra); border: 0; text-align: left; }
-.stat b { display: block; font-family: var(--font-titoli); font-size: 1.6rem; font-weight: var(--peso-titolo); line-height: 1; }
-.stat span { font-size: .8rem; color: var(--tenue); }
-.stat.ritardo b { color: var(--ritardo); }
-.stat.zero b { color: var(--tenue); opacity: .5; }
 
-.prossimo { position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; background: var(--accento); color: var(--accento-testo); border-radius: var(--raggio-grande); padding: 16px 18px; margin-bottom: 18px; box-shadow: var(--ombra); border: 0; width: 100%; text-align: left; }
-.prossimo::after { content: ""; position: absolute; right: -30px; top: -30px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255, 255, 255, .12); }
-.prossimo small { display: block; opacity: .8; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
-.prossimo strong { display: block; font-family: var(--font-titoli); font-size: 1.15rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.prossimo .conto-grande { margin-left: auto; font-family: var(--font-titoli); font-weight: 700; font-size: 1.35rem; white-space: nowrap; z-index: 1; }
-.prossimo > div { min-width: 0; z-index: 1; }
 
 /* ---------- gruppi e righe ---------- */
 .gruppo { margin-bottom: 18px; }
@@ -271,11 +259,17 @@ main { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px var
 :root[data-tema="allegro"] .foglio h2 { font-family: var(--font-mano); font-size: 2rem; font-weight: 700; }
 .testo-grande { width: 100%; border: 0; outline: none; resize: none; background: transparent; font-size: 1.3rem; font-weight: 550; line-height: 1.3; padding: 4px 0; min-height: 40px; }
 :root[data-tema="allegro"] .testo-grande { font-family: var(--font-mano); font-size: 1.8rem; font-weight: 700; }
-.capito { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; margin: 6px 0 10px; }
-.capito span { display: inline-flex; align-items: center; gap: 4px; background: var(--accento-tenue); color: var(--accento); border-radius: 10px; padding: 4px 9px; font-size: .84rem; font-weight: 600; animation: spunta-chip .3s var(--molla); }
-.capito span.urg { background: var(--ritardo-tenue); color: var(--ritardo); }
-.capito .vuoto-capito { background: none; color: var(--tenue); font-weight: 400; padding-left: 0; animation: none; }
-@keyframes spunta-chip { from { transform: scale(.6); opacity: 0; } }
+.capito { min-height: 24px; margin: 2px 0 4px; font-size: .92rem; line-height: 1.5; cursor: pointer; }
+/* "Ho capito" è una frase, non una fila di bottoni: toccandola si aprono i dettagli */
+.capito-frase { color: var(--accento); font-weight: 600; }
+.capito-frase i { font-style: normal; color: var(--tenue); margin: 0 6px; font-weight: 400; }
+.capito-frase .urg { color: var(--ritardo); }
+.capito .vuoto-capito { color: var(--tenue); }
+.campo-stretto { margin-top: 10px; }
+.campo-stretto > .etichetta { margin-bottom: 5px; }
+.chip.persona { border-style: dashed; }
+.chip.persona.sel { border-style: solid; }
+.fam-nome { margin: -4px 2px 10px; color: var(--tenue); font-size: .9rem; }
 .campo { margin-top: 14px; }
 .campo > label, .campo > .etichetta { display: block; font-size: .78rem; font-weight: 650; color: var(--tenue); margin: 0 2px 7px; text-transform: uppercase; letter-spacing: .05em; }
 .riga-campi { display: flex; gap: 8px; }
@@ -286,7 +280,9 @@ textarea.inserto { resize: vertical; min-height: 70px; }
 .dettagli-tog { border: 0; background: none; color: var(--accento); font-weight: 600; padding: 6px 0; display: flex; align-items: center; gap: 4px; }
 .dettagli-tog svg { transition: transform .25s; width: 18px; height: 18px; }
 .dettagli-tog.aperto svg { transform: rotate(180deg); }
-.azioni-foglio { display: flex; gap: 10px; margin-top: 18px; position: sticky; bottom: 0; background: var(--superficie); padding-top: 8px; }
+.foglio { --fondo-foglio: calc(18px + var(--inset-basso)); }
+/* Il tasto resta in fondo alla finestra e copre anche il margine sotto, così i campi non spuntano da sotto */
+.azioni-foglio { display: flex; gap: 10px; margin-top: 18px; position: sticky; bottom: calc(-1 * var(--fondo-foglio)); margin-bottom: calc(-1 * var(--fondo-foglio)); padding: 10px 0 var(--fondo-foglio); background: var(--superficie); z-index: 2; }
 .btn { border: 0; border-radius: 14px; padding: 14px 16px; font-weight: 650; font-size: 1rem; background: var(--superficie-2); transition: transform .15s var(--molla), opacity .2s; }
 .btn:active { transform: scale(.97); }
 .btn.primario { flex: 1; background: var(--accento); color: var(--accento-testo); }
@@ -357,7 +353,6 @@ textarea.inserto { resize: vertical; min-height: 70px; }
   .testa, .cerca { width: 100%; max-width: 792px; margin: 0 auto; }
   .testa { padding-top: 28px; }
   .testa h1 { font-size: 2.3rem; }
-  .riassunto { gap: 14px; }
   main { padding-bottom: 40px; }
   .foglio { left: 50%; right: auto; bottom: 50%; width: 520px; border-radius: var(--raggio-grande); transform: translate(-50%, 60%) scale(.96); opacity: 0; transition: transform .35s var(--molla), opacity .2s; }
   .foglio.on { transform: translate(-50%, 50%); opacity: 1; }
@@ -398,7 +393,7 @@ textarea.inserto { resize: vertical; min-height: 70px; }
   will-change: transform, opacity; contain: layout paint;
 }
 .foglio.finestra .maniglia { display: none; }
-.foglio.finestra .azioni-foglio { padding-bottom: 2px; }
+.foglio.finestra { --fondo-foglio: 14px; padding-bottom: 14px; }
 @media (min-width: 900px) { .foglio.finestra { top: 12vh; translate: -50% 0; transform: none; opacity: 1; } }
 /* Con la finestra aperta il + (ora ×) resta toccabile sopra il velo per richiuderla */
 .barra.sopra { z-index: 12; }
@@ -453,4 +448,3 @@ input.codice { font-size: 1.3rem; letter-spacing: .2em; text-transform: uppercas
 #nCorpo h3 { font-size: .95rem; margin: 14px 0 0; color: var(--tenue); font-weight: 600; }
 #btnImp { position: relative; }
 #btnImp.nuovo::after { content: ""; position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--ritardo); border: 2px solid var(--superficie); }
-.foglio.finestra { padding-bottom: 14px; } /* la finestra non tocca la barra di Android: niente margine extra */

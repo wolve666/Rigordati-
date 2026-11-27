@@ -24,6 +24,7 @@ const iniziale = n => (n || '?').trim().charAt(0).toUpperCase();
 const avatar = (g, uid, cls = '') => { const m = famiglia.membro(g, uid); return `<span class="avatar ${cls}" style="background:var(--c-${m?.colore || 'lilla'})">${esc(iniziale(m?.nome))}</span>`; };
 let gruppoAperto = null; // gruppo mostrato nella scheda Famiglia
 let invitoMostrato = null; // { g, codice } ultimo codice creato
+let attivitaTutta = false; // "Attività" mostra solo le ultime finché non chiedi tutto
 
 /* ---------- utilità ---------- */
 const $ = id => document.getElementById(id);
@@ -147,7 +148,6 @@ function disegna() {
   $('btnImp').classList.toggle('nuovo', !!aggiornamento);
   const nAttesa = lista.filter(inAttesa).length;
   $('bollinoFam').hidden = !nAttesa; $('bollinoFam').textContent = nAttesa;
-  $('tabFamNome').textContent = famiglia.gruppi.length === 1 ? famiglia.gruppi[0].nome.slice(0, 12) : 'Famiglia';
   ({ 'v-oggi': vistaOggi, 'v-cal': vistaCalendario, 'v-fam': vistaFamiglia, 'v-liste': vistaListe, 'v-imp': vistaImpostazioni, 'v-cerca': vistaCerca })[vista]();
   aggiornaBollino();
 }
@@ -168,7 +168,7 @@ function riga(x, { mostraGiorno = false } = {}) {
   if (p.gruppo) {
     if (p.perChi?.length) meta.push(`<span class="pill per">per ${esc(p.perChi.map(u => nomeMembro(p.gruppo, u)).join(', '))}</span>`);
     if (!mio(p)) meta.push(`<span>da ${esc(p.autore?.nome || '?')}</span>`);
-    else if (!p.perChi?.length) meta.push(`<span>👪 ${esc(famiglia.gruppo(p.gruppo)?.nome || '')}</span>`);
+    else if (!p.perChi?.length && vista !== 'v-fam') meta.push(`<span>👪 ${esc(famiglia.gruppo(p.gruppo)?.nome || '')}</span>`); // in Famiglia si sa già
     if (p.tipo === 'domanda') {
       const r = p.risposte || [];
       if (inAttesa(p)) meta.push('<span class="pill attesa">Rispondi tu</span>');
@@ -209,14 +209,7 @@ function vistaOggi() {
   const settimana = primaPerVoce(ag.filter(x => x.occ > dom && x.occ <= piuGiorni(o, 7) && !x.fatto));
   const avanti = primaPerVoce(ag.filter(x => x.occ > piuGiorni(o, 7) && !x.fatto));
   const libere = lista.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda').sort((a, b) => (b.priorita || 0) - (a.priorita || 0) || b.creato - a.creato).map(senzaData);
-  const restaOggi = dOggi.filter(x => !x.fatto);
-  const prox = ag.find(x => !x.fatto && x.scad > ora && x.scad - ora < 7 * 864e5);
-
-  let h = `${cartaAggiornamento()}<div class="riassunto">
-    <button class="stat ${ritardo.length ? 'ritardo' : 'zero'}" data-salta="g-ritardo"><b>${ritardo.length}</b><span>in ritardo</span></button>
-    <button class="stat ${restaOggi.length ? '' : 'zero'}" data-salta="g-oggi"><b>${restaOggi.length}</b><span>oggi</span></button>
-    <button class="stat ${dDomani.length ? '' : 'zero'}" data-salta="g-domani"><b>${dDomani.length}</b><span>domani</span></button></div>`;
-  if (prox) h += `<button class="prossimo" data-id="${esc(prox.p.id)}" data-occ="${prox.occ}"><div><small>Prossimo</small><strong>${esc(prox.p.titolo)}</strong></div><span class="conto-grande">${conto(prox.scad).replace('tra ', '')}</span></button>`;
+  let h = cartaAggiornamento();
   const tutto = ritardo.length + dOggi.length + dDomani.length + settimana.length + avanti.length + libere.length;
   if (!tutto) h += vuoto('Niente da ricordare', 'Tocca + e scrivi come parli: "domani alle 9 chiamare Marco".');
   h += `<div id="g-ritardo">${gruppo('In ritardo', ritardo.map(x => riga(x)), 'ritardo')}</div>`;
@@ -227,10 +220,7 @@ function vistaOggi() {
   h += gruppo('Quando capita', libere.map(x => riga(x)));
   $('v-oggi').innerHTML = h;
   collegaCartaAggiornamento();
-  $('v-oggi').querySelectorAll('[data-salta]').forEach(b => b.onclick = () => $(b.dataset.salta)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   $('v-oggi').querySelectorAll('[data-vai]').forEach(b => b.onclick = () => vaiA(b.dataset.vai));
-  const pb = $('v-oggi').querySelector('.prossimo');
-  if (pb) pb.onclick = () => apriScheda(lista.find(p => p.id === pb.dataset.id));
 }
 
 function vistaCalendario() {
@@ -417,25 +407,31 @@ function vistaFamiglia() {
   const prossimi = primaPerVoce(agenda(delGruppo.filter(p => p.tipo !== 'domanda'), o, piuGiorni(o, 30), cfg).filter(x => !x.fatto)).slice(0, 8);
   const daFare = delGruppo.filter(p => !p.data && !p.fatto && p.tipo !== 'domanda').map(senzaData);
   const fa = t => { const m = Math.round((adesso() - t) / 60000); return m < 1 ? 'adesso' : m < 60 ? `${m} min fa` : m < 1440 ? `${Math.round(m / 60)} h fa` : giornoBreve(dataNelFuso(t, cfg.fuso)); };
-  const eventi = famiglia.eventi.filter(e => e.gruppo === g.id).slice(-15).reverse();
+  const tuttiEventi = famiglia.eventi.filter(e => e.gruppo === g.id).slice(-30).reverse();
+  const eventi = attivitaTutta ? tuttiEventi : tuttiEventi.slice(0, 4);
   el.innerHTML = `
-    ${gruppi.length > 1 ? `<div class="chips" style="margin-bottom:12px">${gruppi.map(x => `<button class="chip ${x.id === g.id ? 'sel' : ''}" data-g="${esc(x.id)}">${esc(x.nome)}</button>`).join('')}</div>` : ''}
+    ${gruppi.length > 1 ? `<div class="chips" style="margin-bottom:12px">${gruppi.map(x => `<button class="chip ${x.id === g.id ? 'sel' : ''}" data-g="${esc(x.id)}">${esc(x.nome)}</button>`).join('')}</div>` : `<p class="fam-nome">👪 ${esc(g.nome)} · ${g.membri.length === 1 ? 'solo tu, per ora' : g.membri.length + ' persone'}</p>`}
     <div class="membri-riga">${g.membri.map(m => `<div class="membro">${avatar(g.id, m.id)}<span>${esc(m.id === ioId() ? 'Tu' : m.nome)}</span></div>`).join('')}
       <button class="membro invita" id="fInvita"><span class="avatar">+</span><span>Invita</span></button></div>
-    <div id="fInvito">${invitoMostrato?.g === g.id ? `<div class="scheda-fam"><h3>Codice d'invito</h3><div class="codice-grande">${invitoMostrato.codice}</div><p style="text-align:center;margin:0">Vale 7 giorni. Chi lo riceve apre ${MARCHIO.nome} › Famiglia › Entra con un codice.</p><button class="btn primario largo" id="fCondividiInvito">Condividi</button></div>` : ''}</div>
+    <div id="fInvito">${invitoMostrato?.g === g.id ? `<div class="scheda-fam"><h3>Codice d'invito</h3><div class="codice-grande">${invitoMostrato.codice}</div><p style="text-align:center;margin:0">Vale 7 giorni. Chi lo riceve apre ${MARCHIO.nome} › Famiglia › Entra con un codice.</p><div class="riga-campi"><button class="btn" id="fChiudiInvito" style="flex:0 0 auto">Chiudi</button><button class="btn primario" id="fCondividiInvito">Condividi il codice</button></div></div>` : ''}</div>
     ${gruppo('Rispondi tu', attesa.map(p => riga(senzaData(p))), 'ritardo')}
     ${gruppo('Domande', altre.map(p => riga(senzaData(p))))}
     ${gruppo('In programma insieme', prossimi.map(x => riga(x, { mostraGiorno: true })))}
     ${gruppo('Da fare insieme', daFare.map(x => riga(x)))}
     ${!domande.length && !prossimi.length && !daFare.length ? vuoto('Ancora niente in comune', 'Tocca + e scegli "Con chi": ' + esc(g.nome) + '. Con un punto di domanda diventa una domanda.') : ''}
-    ${eventi.length ? `<div class="gruppo"><div class="gruppo-titolo">Attività</div><div class="lista-righe feed">${eventi.map(e => { const f = fraseEvento(e, ioId()); return `<div class="ev">${avatar(g.id, e.da, 'piccolo')}<div><b>${esc(f.titolo)}</b> ${esc(f.corpo)}<small>${fa(e.creato)}</small></div></div>`; }).join('')}</div></div>` : ''}
+    ${eventi.length ? `<div class="gruppo"><div class="gruppo-titolo">Attività</div><div class="lista-righe feed">${eventi.map(e => { const f = fraseEvento(e, ioId()); return `<div class="ev">${avatar(g.id, e.da, 'piccolo')}<div><b>${esc(f.titolo)}</b> ${esc(f.corpo)}<small>${fa(e.creato)}</small></div></div>`; }).join('')}</div>${tuttiEventi.length > eventi.length ? '<button class="altro-btn" id="fAttivitaTutta">Mostra tutta l\'attività</button>' : ''}</div>` : ''}
     <div class="chips" style="justify-content:center;margin-top:8px"><button class="chip" id="fAltro">+ Altra famiglia o gruppo</button><button class="chip" id="fRinomina">Rinomina</button><button class="chip" id="fEsci">Esci dal gruppo</button></div>`;
   el.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { gruppoAperto = b.dataset.g; vistaFamiglia(); });
   $('fInvita').onclick = () => azioneFam(async () => {
     const { codice } = await famiglia.invita(g.id);
     invitoMostrato = { g: g.id, codice };
   });
-  if ($('fCondividiInvito')) $('fCondividiInvito').onclick = () => condividiTesto(`Entra nella famiglia "${g.nome}" su ${MARCHIO.nome} con il codice ${invitoMostrato.codice}`);
+  if ($('fCondividiInvito')) $('fCondividiInvito').onclick = async () => {
+    try { await condividiTesto(`Entra nella famiglia "${g.nome}" su ${MARCHIO.nome} con il codice ${invitoMostrato.codice}`); } catch { return; }
+    invitoMostrato = null; vistaFamiglia(); // condiviso: il codice non serve più sullo schermo
+  };
+  if ($('fChiudiInvito')) $('fChiudiInvito').onclick = () => { invitoMostrato = null; vistaFamiglia(); };
+  if ($('fAttivitaTutta')) $('fAttivitaTutta').onclick = () => { attivitaTutta = true; vistaFamiglia(); };
   $('fAltro').onclick = () => { gruppoAperto = 'nuovo'; vistaFamiglia(); };
   $('fRinomina').onclick = () => azioneFam(async () => { const n = prompt('Nuovo nome del gruppo', g.nome)?.trim(); if (n) await famiglia.rinominaGruppo(g.id, n); });
   $('fEsci').onclick = () => azioneFam(async () => { if (!confirm(`Uscire da "${g.nome}"? Non vedrai più le sue voci.`)) return; await famiglia.esci(g.id); gruppoAperto = null; toast('Sei uscito dal gruppo'); });
@@ -799,37 +795,38 @@ function aggiornaScheda() {
   const v = s.v;
   $('sSalva').disabled = !$('sTesto').value.trim();
   // cosa ho capito
+  // cosa ho capito, in una frase sola (avvisi, gruppo e tipo si vedono già nei loro campi)
   const c = [];
-  if (v.data) c.push(`<span>📅 ${giornoBreve(v.data)}</span>`);
-  if (v.ora) c.push(`<span>🕘 ${v.ora}</span>`);
+  if (v.data) c.push(`<span>📅 ${giornoBreve(v.data)}${v.ora ? ' alle ' + v.ora : ''}</span>`);
+  else if (v.ora) c.push(`<span>🕘 ${v.ora}</span>`);
   if (v.ripeti) c.push(`<span>🔁 ${descriviRipeti(v.ripeti, v.data || oggiIso())}</span>`);
-  if (v.priorita) c.push(`<span class="urg">${v.priorita === 2 ? '‼️ Urgente' : '❗ Importante'}</span>`);
   if (v.lista && listaDi(v.lista)) c.push(`<span>${listaDi(v.lista).emoji} ${esc(listaDi(v.lista).nome)}</span>`);
   if (v.listaNuova) c.push(`<span>✨ nuova lista "${esc(v.listaNuova)}"</span>`);
-  if (v.data && v.avvisi.length && v.tipo !== 'domanda') c.push(`<span>🔔 ${v.avvisi.length === 1 ? (v.avvisi[0] ? durata(v.avvisi[0]) + ' prima' : 'al momento') : v.avvisi.length + ' avvisi'}</span>`);
-  if (v.data && v.insisti && v.tipo !== 'domanda') c.push(`<span>📣 insiste</span>`);
-  if (v.gruppo) c.push(`<span>👪 ${esc(famiglia.gruppo(v.gruppo)?.nome || '')}${v.perChi.length ? ' · per ' + esc(v.perChi.map(u => nomeMembro(v.gruppo, u)).join(', ')) : ''}</span>`);
-  if (v.tipo === 'domanda') c.push('<span>💬 Domanda</span>');
+  if (v.priorita) c.push(`<span class="urg">${v.priorita === 2 ? '‼️ Urgente' : '❗ Importante'}</span>`);
   if (!s.id) $('sSalva').textContent = v.tipo === 'domanda' && v.gruppo ? 'Chiedi' : v.gruppo ? 'Condividi' : 'Ricordamelo';
   // condivisione
   const gruppi = famiglia.attivo ? famiglia.gruppi : [];
   $('sCondividi').hidden = !gruppi.length;
   if (gruppi.length) {
-    $('sGruppo').innerHTML = `<button class="chip ${!v.gruppo ? 'sel' : ''}" data-g="">Solo io</button>` + gruppi.map(g => `<button class="chip ${v.gruppo === g.id ? 'sel' : ''}" data-g="${esc(g.id)}">👪 ${esc(g.nome)}</button>`).join('');
-    $('sGruppo').querySelectorAll('button').forEach(b => b.onclick = () => { v.gruppo = b.dataset.g; v.perChi = []; if (!s.scelto.tipo) v.tipo = v.gruppo && $('sTesto').value.includes('?') ? 'domanda' : 'promemoria'; aggiornaScheda(); });
+    // Una riga sola: "Solo io · 👪 Casa Rossi · Bruno · Carla". Il gruppo è per tutti, una persona è "per lei".
+    $('sGruppo').innerHTML = `<button class="chip ${!v.gruppo ? 'sel' : ''}" data-g="">Solo io</button>` + gruppi.map(g =>
+      `<button class="chip ${v.gruppo === g.id && !v.perChi.length ? 'sel' : ''}" data-g="${esc(g.id)}">👪 ${esc(g.nome)}</button>` +
+      g.membri.filter(m => m.id !== ioId()).map(m => `<button class="chip persona ${v.gruppo === g.id && v.perChi.includes(m.id) ? 'sel' : ''}" data-g="${esc(g.id)}" data-u="${esc(m.id)}">${esc(m.nome)}</button>`).join('')).join('');
+    $('sGruppo').querySelectorAll('button').forEach(b => b.onclick = () => {
+      const gid = b.dataset.g, u = b.dataset.u;
+      if (!u) { v.gruppo = gid; v.perChi = []; }
+      else {
+        const set = new Set(v.gruppo === gid ? v.perChi : []);
+        set.has(u) ? set.delete(u) : set.add(u);
+        v.gruppo = gid; v.perChi = [...set];
+      }
+      if (!s.scelto.tipo) v.tipo = v.gruppo && $('sTesto').value.includes('?') ? 'domanda' : 'promemoria';
+      aggiornaScheda();
+    });
     $('sCondivisoCampi').hidden = !v.gruppo;
-    const g = famiglia.gruppo(v.gruppo);
-    if (g) {
-      $('sPerChi').innerHTML = `<button class="chip ${!v.perChi.length ? 'sel' : ''}" data-u="">Tutti</button>` + g.membri.map(m => `<button class="chip ${v.perChi.includes(m.id) ? 'sel' : ''}" data-u="${esc(m.id)}">${esc(m.id === ioId() ? 'Io' : m.nome)}</button>`).join('');
-      $('sPerChi').querySelectorAll('button').forEach(b => b.onclick = () => {
-        const u = b.dataset.u, set = new Set(v.perChi);
-        if (!u) set.clear(); else set.has(u) ? set.delete(u) : set.add(u);
-        v.perChi = set.size === g.membri.length ? [] : [...set]; aggiornaScheda();
-      });
-      $('sTipo').querySelectorAll('button').forEach(b => { b.classList.toggle('sel', b.dataset.t === v.tipo); b.onclick = () => { s.scelto.tipo = 1; v.tipo = b.dataset.t; aggiornaScheda(); }; });
-    }
+    $('sTipo').querySelectorAll('button').forEach(b => { b.classList.toggle('sel', b.dataset.t === v.tipo); b.onclick = () => { s.scelto.tipo = 1; v.tipo = b.dataset.t; aggiornaScheda(); }; });
   }
-  $('sCapito').innerHTML = c.join('') || `<span class="vuoto-capito">${$('sTesto').value ? 'Senza data: lo trovi in "Quando capita"' : 'Scrivi come parli: "domani alle 9 chiamare Marco"'}</span>`;
+  $('sCapito').innerHTML = c.length ? `<span class="capito-frase">${c.join('<i>·</i>')}</span>` : `<span class="vuoto-capito">${$('sTesto').value ? 'Senza data: lo trovi in "Quando capita"' : 'Scrivi come parli: "domani alle 9 chiamare Marco"'}</span>`;
   // scorciatoie
   const o = oggiIso(), h = new Date().getHours();
   const sab = piuGiorni(o, (6 - giornoSettimana(o) + 7) % 7 || 7);
@@ -866,6 +863,7 @@ function aggiornaScheda() {
   $('sListe').innerHTML = `<button class="chip ${!v.lista ? 'sel' : ''}" data-l="">Nessuna</button>` + liste.map(l => `<button class="chip lista ${v.lista === l.id ? 'sel' : ''}" data-l="${esc(l.id)}" style="--colore-lista:var(--c-${l.colore})">${l.emoji} ${esc(l.nome)}</button>`).join('');
   $('sListe').querySelectorAll('button').forEach(b => b.onclick = () => { s.scelto.lista = 1; v.lista = b.dataset.l; v.listaNuova = ''; aggiornaScheda(); });
 }
+$('sCapito').onclick = () => { if ($('sDettagli').hidden && $('sCapito').querySelector('.capito-frase')) $('sDettagliTog').click(); };
 $('sDettagliTog').onclick = () => { const h = !$('sDettagli').hidden; $('sDettagli').hidden = h; $('sDettagliTog').classList.toggle('aperto', !h); if (!h) aggiornaScheda(); };
 $('sData').oninput = () => { s.scelto.data = 1; s.v.data = $('sData').value; aggiornaScheda(); };
 $('sOra').oninput = () => { s.scelto.ora = 1; s.v.ora = $('sOra').value; if (s.v.ora && !s.v.data) s.v.data = oggiIso(); aggiornaScheda(); };

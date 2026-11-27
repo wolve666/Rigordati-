@@ -51,7 +51,7 @@ const tema = async (t, modo) => {
   await page.reload();
   await vedi('#v-cal.attiva .griglia');
   await page.click('.tab[data-v="v-oggi"]');
-  await vedi('#v-oggi .riassunto');
+  await vedi('#v-oggi .gruppo');
 };
 
 /* ---------- primo avvio ---------- */
@@ -101,12 +101,11 @@ await page.click('.tab[data-v="v-oggi"]');
 await vedi('#v-oggi .gruppo.ritardo');
 assert.match(await testo('#g-ritardo'), /Restituire il libro a Giulia/);
 assert.match(await testo('#v-oggi'), /Latte, pane, uova/);
-assert.match(await testo('#v-oggi .prossimo'), /Prossimo/i);
-const ritardi = +(await testo('.stat.ritardo b'));
-assert.equal(ritardi, 1);
+assert.equal(await page.locator('#v-oggi .stat, #v-oggi .prossimo').count(), 0, 'niente contatori né "Prossimo": solo la lista');
+assert.equal(await page.locator('#g-ritardo .riga-guscio').count(), 1);
 assert.ok(+(await page.textContent('#bollinoOggi')) >= 2, 'bollino sulla scheda Oggi');
 await foto('10-elegante-oggi');
-passo('Oggi: ritardi, prossimo, gruppi, bollino');
+passo('Oggi: solo la lista (ritardi, oggi, prossimi giorni) e bollino');
 
 /* ---------- scrivere come si parla ---------- */
 await page.click('#btnNuovo');
@@ -115,7 +114,11 @@ await page.fill('#sTesto', 'ogni lunedì e giovedì inglese alle 19 #lavoro !');
 await page.waitForTimeout(100);
 const capito = await testo('#sCapito');
 assert.match(capito, /19:00/); assert.match(capito, /lun, gio/); assert.match(capito, /Importante/); assert.match(capito, /Lavoro/);
-await page.click('#sDettagliTog');
+await page.click('#sCapito'); // toccando la frase si aprono i dettagli
+await page.locator('#sDettagli').waitFor();
+const bott = await page.evaluate(() => { const f = document.getElementById('fScheda'), a = f.querySelector('.azioni-foglio'); f.scrollTop = 120; return [a.getBoundingClientRect().bottom, f.getBoundingClientRect().bottom]; });
+assert.ok(Math.abs(bott[0] - bott[1]) < 1.5, `il tasto copre il fondo della finestra (${bott})`);
+await page.evaluate(() => document.getElementById('fScheda').scrollTop = 0);
 await foto('11-elegante-nuovo');
 await page.click('#sSalva');
 await page.waitForFunction(() => !document.getElementById('fScheda').classList.contains('on'));
@@ -126,7 +129,7 @@ await page.click('#btnNuovo');
 await page.fill('#sTesto', 'tra 2 ore chiamare il commercialista urgente');
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => document.querySelector('#v-oggi').innerText.includes('Chiamare il commercialista'));
-assert.match(await testo('#v-oggi .prossimo, #g-oggi'), /commercialista|Tocca il cerchio/);
+assert.match(await testo('#g-oggi'), /commercialista/);
 passo('ultimo minuto: "tra 2 ore … urgente" con invio');
 
 /* ---------- spunta e annulla ---------- */

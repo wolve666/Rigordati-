@@ -60,8 +60,11 @@ await A.page.locator('#fInvita').waitFor();
 await A.page.click('#fInvita');
 const codice = (await A.page.locator('.codice-grande').innerText()).trim();
 assert.match(codice, /^[A-Z0-9]{8}$/);
-assert.equal(await A.page.locator('#tabFamNome').innerText(), 'Casa Rossi');
-passo(`Anna crea "Casa Rossi" e ottiene il codice ${codice}`);
+await A.page.click('#fCondividiInvito');
+await A.page.waitForFunction(() => !document.querySelector('.codice-grande'));
+assert.match(await A.page.locator('.fam-nome').innerText(), /Casa Rossi/);
+assert.equal(await A.page.locator('.tab[data-v="v-fam"]').innerText(), 'Famiglia', 'la scheda non cambia nome');
+passo(`Anna crea "Casa Rossi", condivide il codice ${codice} e il riquadro si chiude`);
 
 /* ---------- Bruno entra con il codice ---------- */
 const B = await persona('Bruno');
@@ -75,8 +78,9 @@ passo('Bruno entra; Anna lo vede nella famiglia ("👋 Bruno è nel gruppo")');
 await A.page.click('#btnNuovo');
 await A.page.fill('#sTesto', 'Venerdì posso andare a Magic?');
 assert.equal(await A.page.locator('#sGruppo .chip.sel').innerText(), '👪 Casa Rossi', 'dalla scheda Famiglia si condivide già con la famiglia');
-await A.page.click('#sPerChi .chip:has-text("Bruno")');
-assert.match(await A.page.locator('#sCapito').innerText(), /Domanda/);
+await A.page.click('#sGruppo .chip.persona:has-text("Bruno")');
+assert.equal(await A.page.locator('#sGruppo .chip.sel').innerText(), 'Bruno', 'una riga sola: scegliere Bruno vuol dire "per Bruno"');
+assert.equal(await A.page.locator('#sTipo .sel').innerText(), '💬 Domanda');
 await foto(A.page, '60-famiglia-nuova-domanda');
 await A.page.click('#sSalva');
 await A.page.waitForFunction(() => /Domanda inviata a "Casa Rossi"/.test(document.getElementById('toastTesto').textContent), null, { timeout: 5000 });
