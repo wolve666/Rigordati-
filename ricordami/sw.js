@@ -8,7 +8,7 @@ const GUSCIO = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/app.js', './js/novita.js', './js/aggiornamenti.js', './js/famiglia.js', './js/archivio.js', './js/pianificatore.js', './js/profili.js', './js/marchio.js', './js/ics.js', './js/nativo.js',
   './js/nucleo/capisci.js', './js/nucleo/date.js', './js/nucleo/ricorrenze.js',
-  './icone/icona.svg', './icone/icona-192.png', './icone/icona-512.png', './icone/bollino-96.png'
+  './icone/icona-64.png', './icone/icona-192.png', './icone/icona-512.png', './icone/bollino-96.png'
 ];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(GUSCIO))); self.skipWaiting(); });
