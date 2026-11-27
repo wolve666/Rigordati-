@@ -1,4 +1,4 @@
-const CACHE = 'rigordati-v0.5.1';
+const CACHE = 'rigordati-v0.5.2';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png', './badge-96.png'];
 
 self.addEventListener('install', e => {

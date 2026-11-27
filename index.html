@@ -484,7 +484,7 @@ import { getAuth, initializeAuth, indexedDBLocalPersistence, signInWithCredentia
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.5.1';
+const VERSIONE = 'v0.5.2';
 const REPO = 'wolve666/Rigordati-';
 // APK (Capacitor) o versione web?
 const NATIVO = !!window.Capacitor?.isNativePlatform?.();
@@ -954,8 +954,14 @@ const piuNuova = (a, b) => {
 async function controllaAgg(manuale) {
   let tag = null, url = null;
   try {
-    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { cache: 'no-store' });
-    if (r.ok) { const j = await r.json(); const a = (j.assets || []).find(x => x.name.endsWith('.apk')); if (a) { tag = j.tag_name; url = a.browser_download_url; } }
+    // Nello stesso repository ci sono anche le release di RicordaMi (ricordami-vX.Y.Z):
+    // considero solo le release vX.Y.Z con l'APK di Rigordati, e prendo la più nuova.
+    const r = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=30`, { cache: 'no-store' });
+    if (r.ok) for (const j of await r.json()) {
+      if (j.draft || j.prerelease || !/^v\d+\.\d+\.\d+$/.test(j.tag_name)) continue;
+      const a = (j.assets || []).find(x => /^Rigordati.*\.apk$/.test(x.name));
+      if (a && (!tag || piuNuova(j.tag_name, tag))) { tag = j.tag_name; url = a.browser_download_url; }
+    }
   } catch (_) {}
   const nuova = NATIVO && tag && piuNuova(tag, VERSIONE);
   if (!manuale && !nuova) return;
