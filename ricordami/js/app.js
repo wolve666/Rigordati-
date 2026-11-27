@@ -28,6 +28,7 @@ let invitoMostrato = null; // { g, codice } ultimo codice creato
 let attivitaTutta = false; // "Attività" mostra solo le ultime finché non chiedi tutto
 
 /* ---------- utilità ---------- */
+const TEMI = [['elegante', 'Elegante', 'Elegante e funzionale'], ['rame', 'Rame', 'Rame e grafite'], ['allegro', 'Allegro', 'Allegro e simpatico']];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icona = (n, cls = 'i') => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
@@ -521,7 +522,7 @@ function vistaImpostazioni() {
   $('v-imp').innerHTML = `
     <div class="sez">Aspetto</div>
     <div class="pannello">
-      <div class="temi">${['elegante', 'allegro'].map(t => `<button class="tema-carta ${cfg.tema === t ? 'sel' : ''}" data-tema="${t}"><div class="mini mini-${t}"><i></i><i></i><i></i></div><b>${t === 'elegante' ? 'Elegante' : 'Allegro'}</b></button>`).join('')}</div>
+      <div class="temi">${TEMI.map(([t, n]) => `<button class="tema-carta ${cfg.tema === t ? 'sel' : ''}" data-tema="${t}"><div class="mini mini-${t}"><i></i><i></i><i></i></div><b>${n}</b></button>`).join('')}</div>
       <div class="voce"><div>Modalità</div><div class="segmenti" id="iModo" style="flex:0 0 auto">${[['auto', 'Auto'], ['chiaro', 'Chiaro'], ['scuro', 'Scuro']].map(([k, n]) => `<button data-m="${k}" class="${cfg.modo === k ? 'sel' : ''}">${n}</button>`).join('')}</div></div>
       <label class="voce"><div>Animazioni<small>Spegnile per un'app ancora più rapida e sobria</small></div>${interruttore('iAnim', cfg.animazioni !== 'ridotte')}</label>
     </div>
@@ -1195,7 +1196,7 @@ function benvenuto() {
     $('bProfiloAvanti').disabled = false;
   });
   const temi = () => {
-    $('bTemi').innerHTML = ['elegante', 'allegro'].map(t => `<button class="tema-carta ${cfg.tema === t ? 'sel' : ''}" data-tema="${t}"><div class="mini mini-${t}"><i></i><i></i><i></i></div><b>${t === 'elegante' ? 'Elegante e funzionale' : 'Allegro e simpatico'}</b></button>`).join('');
+    $('bTemi').innerHTML = TEMI.map(([t, , lungo]) => `<button class="tema-carta ${cfg.tema === t ? 'sel' : ''}" data-tema="${t}"><div class="mini mini-${t}"><i></i><i></i><i></i></div><b>${lungo}</b></button>`).join('');
     $('bTemi').querySelectorAll('[data-tema]').forEach(x => x.onclick = async e => { cfg = await archivio.salvaImpostazioni({ tema: x.dataset.tema }); applicaAspetto(e); temi(); });
     $('bModo').querySelectorAll('button').forEach(x => { x.classList.toggle('sel', x.dataset.m === cfg.modo); x.onclick = async e => { cfg = await archivio.salvaImpostazioni({ modo: x.dataset.m }); applicaAspetto(e); temi(); }; });
   };

@@ -245,7 +245,22 @@ await page.click('.tab[data-v="v-cal"]'); await vedi('#v-cal .griglia');
 await foto('33-allegro-calendario');
 await tema('allegro', 'scuro');
 await foto('40-allegro-scuro-oggi');
-passo('temi Elegante e Allegro, chiaro e scuro');
+for (const modo of ['scuro', 'chiaro']) {
+  await tema('rame', modo);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accento').trim()), modo === 'scuro' ? '#D4946A' : '#9E5B31');
+  await foto(`5${modo === 'scuro' ? 1 : 5}-rame-${modo}-oggi`);
+  await page.click('.tab[data-v="v-cal"]'); await vedi('#v-cal .griglia');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.giorno.oggi')).boxShadow.includes('inset')), true, 'oggi cerchiato di rame, come il 4 dell\'icona');
+  await foto(`5${modo === 'scuro' ? 2 : 6}-rame-${modo}-calendario`);
+  await page.click('#btnNuovo'); await page.fill('#sTesto', 'venerdì alle 18 ritirare la giacca #personale');
+  await page.waitForTimeout(400); await foto(`5${modo === 'scuro' ? 3 : 7}-rame-${modo}-nuovo`);
+  await page.click('#velo', { position: { x: 20, y: 20 } });
+  await page.click('.tab[data-v="v-liste"]'); await page.click('.carta-blocco'); await vedi('#fBlocco.on'); await page.waitForTimeout(400);
+  await foto(`5${modo === 'scuro' ? 4 : 8}-rame-${modo}-foglietto`);
+  await page.click('#velo', { position: { x: 20, y: 20 } });
+  await page.click('#btnImp'); await vedi('.tema-carta[data-tema="rame"].sel');
+}
+passo('temi Elegante, Rame e Allegro, chiaro e scuro');
 
 /* ---------- schermo grande ---------- */
 await tema('elegante', 'chiaro');
