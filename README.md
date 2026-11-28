@@ -3,7 +3,7 @@
 **Il frigo di casa, ma nel telefono.**
 Calendario condiviso in tempo reale per la famiglia: impegni, domande e cose da fare, con notifiche push e promemoria automatici.
 
-Versione attuale: **v0.6.1** (APK Android + versione web per PC)
+Versione attuale: **v0.6.2** (APK Android + versione web per PC)
 App: https://wolve666.github.io/Rigordati-/
 
 ---
@@ -221,6 +221,7 @@ Se cambia `cloudflare-worker.js`, va reincollato anche su Cloudflare (la prima r
 
 | Versione | Novità |
 |---|---|
+| v0.6.2 | Tasto indietro del telefono gestito nell'APK (plugin App): chiude fogli, schede e ciclo invece di uscire; sul calendario manda l'app in sottofondo |
 | v0.6.1 | Ritratti dei figli disegnati senza ritaglio SVG, più compatibili con il telefono |
 | v0.6.0 | Nuova scheda Famiglia (il + passa tra Da fare e Famiglia): figli con ritratti, altezze, regolarità con le cacchine a tre umori, malattie, medicine, visite, sport e impegni segnati sul calendario con promemoria; sezione privata Il mio ciclo con impronta, anello delle fasi, diario, calendario solo suo, statistiche e precisione delle previsioni, importazione da Clue |
 | v0.5.2 | Aggiornamenti: l'app considera solo le proprie release (vX.Y.Z con APK di Rigordati) e non propone più quelle di RicordaMi, che stanno nello stesso repository |

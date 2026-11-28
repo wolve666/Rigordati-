@@ -689,7 +689,7 @@ import { getAuth, initializeAuth, indexedDBLocalPersistence, signInWithCredentia
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.6.1';
+const VERSIONE = 'v0.6.2';
 const REPO = 'wolve666/Rigordati-';
 // APK (Capacitor) o versione web?
 const NATIVO = !!window.Capacitor?.isNativePlatform?.();
@@ -948,6 +948,13 @@ window.addEventListener('popstate', () => {
   if (cicloAperto) { chiudiCiclo(); return; }
   if (foglioAperto) { chiudiFoglio(true); return; }
   if (attuale() !== 'v-cal') vaiA('v-cal', false);
+});
+// tasto indietro del telefono (APK): chiude pannelli, ciclo, fogli e schede; sul calendario manda l'app in sottofondo
+if (NATIVO && P.App) P.App.addListener('backButton', () => {
+  const aperto = cPanel || cicloAperto || foglioAperto || attuale() !== 'v-cal';
+  if (!aperto) { P.App.minimizeApp(); return; }
+  if (history.state) { history.back(); return; }
+  if (cPanel) chiudiPanel(); else if (cicloAperto) chiudiCiclo(); else if (foglioAperto) chiudiFoglio(true); else vaiA('v-cal', false);
 });
 
 /* ---------- nuovo ---------- */

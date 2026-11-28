@@ -11,7 +11,7 @@ Calendario condiviso in tempo reale per coppie e famiglie: impegni, domande con 
 
 ## Stack
 - **Frontend**: un solo `index.html` (HTML + CSS + JS modulo, niente build), `sw.js`, `manifest.json`.
-- **APK**: Capacitor 6, pacchetto `it.educk.rigordati` (versione privata; quella pubblica sarà un pacchetto separato). Compilato da `.github/workflows/build-apk.yml` a ogni push su `main`; release `vX.Y.Z` con l'APK. Versione in `package.json` (allineata a `VERSIONE`). `NATIVO` in `index.html` distingue APK e web. Plugin: FirebaseAuthentication, FirebaseMessaging, LocalNotifications (accessibili da `window.Capacitor.Plugins`). Promemoria impegni programmati localmente sull'APK; il Worker li invia solo ai dispositivi web.
+- **APK**: Capacitor 6, pacchetto `it.educk.rigordati` (versione privata; quella pubblica sarà un pacchetto separato). Compilato da `.github/workflows/build-apk.yml` a ogni push su `main`; release `vX.Y.Z` con l'APK. Versione in `package.json` (allineata a `VERSIONE`). `NATIVO` in `index.html` distingue APK e web. Plugin: App (tasto indietro: listener `backButton`), FirebaseAuthentication, FirebaseMessaging, LocalNotifications (accessibili da `window.Capacitor.Plugins`). Promemoria impegni programmati localmente sull'APK; il Worker li invia solo ai dispositivi web.
 - Segreti GitHub: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. `google-services.json` nella radice.
 - **Firebase** (piano gratuito Spark, progetto `rigordati`): Firestore, Authentication con Google, Cloud Messaging (FCM). SDK web 10.12.2 da `gstatic.com`.
 - **Cloudflare Worker** `rigordati.wolve666.workers.dev` (file `cloudflare-worker.js`: NON va su GitHub Pages, si incolla nell'editor Cloudflare):
