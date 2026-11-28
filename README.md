@@ -3,7 +3,7 @@
 **Il frigo di casa, ma nel telefono.**
 Calendario condiviso in tempo reale per la famiglia: impegni, domande e cose da fare, con notifiche push e promemoria automatici.
 
-Versione attuale: **v0.6.2** (APK Android + versione web per PC)
+Versione attuale: **v0.6.3** (APK Android + versione web per PC)
 App: https://wolve666.github.io/Rigordati-/
 
 ---
@@ -221,6 +221,7 @@ Se cambia `cloudflare-worker.js`, va reincollato anche su Cloudflare (la prima r
 
 | Versione | Novità |
 |---|---|
+| v0.6.3 | Scheda del figlio che si apre a tutto schermo trascinandola in su: figura intera proporzionata all'altezza vera accanto al righello, bilancia con il peso, cacchina di oggi, grafico di crescita; nuova voce Peso |
 | v0.6.2 | Tasto indietro del telefono gestito nell'APK (plugin App): chiude fogli, schede e ciclo invece di uscire; sul calendario manda l'app in sottofondo |
 | v0.6.1 | Ritratti dei figli disegnati senza ritaglio SVG, più compatibili con il telefono |
 | v0.6.0 | Nuova scheda Famiglia (il + passa tra Da fare e Famiglia): figli con ritratti, altezze, regolarità con le cacchine a tre umori, malattie, medicine, visite, sport e impegni segnati sul calendario con promemoria; sezione privata Il mio ciclo con impronta, anello delle fasi, diario, calendario solo suo, statistiche e precisione delle previsioni, importazione da Clue |
