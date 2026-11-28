@@ -27,6 +27,15 @@ Calendario condiviso in tempo reale per coppie e famiglie: impegni, domande con 
 - `voci/{id}`: `tipo` (`impegno` | `domanda` | `todo`), `testo`, `data` (`AAAA-MM-GG`), `ora` (`HH:MM`), `autore`, `autoreNome`, `creato`, `fatto`, `risposte[]` (`email, nome, testo, quando`), `avvisoAt` (ms, solo impegni futuri).
 - `dispositivi/{token}`: `token`, `email`, `nome`, `agg`.
 - Regole: lettura e scrittura solo per le email ammesse.
+- `famiglia/{id}` (condivisa, stesse regole di `voci`): `tipo: 'bimbo'` (`nome`, `sesso` m|f, `colore`, `creato`) oppure `tipo: 'evento'` (`cat`: cacca | malattia | medicina | visita | sport | impegno | altezza, `bimbo`, `data`, `fine` solo malattia, `ora`, `testo`, `umore` buona|media|brutta, `cm`).
+- `ciclo/{uid}` (PRIVATO: regola `request.auth.uid == uid`): `imp` (`durata`, `flusso`, `promemoria`), `giorni` { 'AAAA-MM-GG': { flusso, dolore[], umore[], energia, sonno, pelle[], voglie[], pillola } }, `importato`. Si scrive tutto il documento con `setDoc`.
+
+## Famiglia e Ciclo (v0.6.0)
+- Barra: Calendario, Domande, Da fare, **+**, Famiglia. Il + nella scheda Famiglia apre `fEvento`.
+- Fogli `fBimbo`, `fEvento`, `fFiglio`; `passaA(id)` cambia foglio senza aggiungere passi alla cronologia; i tasti `[data-indietro]` fanno `history.back()`.
+- Disegni: `avatar(b)` (ragazzo/ragazza) e `cacca(umore)` in SVG. Icone calendario da `CAT`, giorni di malattia con classe `.malato`.
+- Ciclo: overlay `#ciclo` con stile notturno fisso (non segue i temi), aperto da `apriCiclo()` dopo `sblocca()` (plugin `@capgo/capacitor-native-biometric`, permesso `USE_BIOMETRIC` in `patch-android.py`). Pannelli interni `apriPanel`/`chiudiPanel`. Calcoli in `cicloCalc()` e `faseDi()`; importazione Clue tollerante in `leggiClue()` (JSON/.cluedata o CSV). Si richiude dopo 3 minuti in sottofondo.
+- Promemoria APK aggiuntivi da `extraPromemoria()` (famiglia con ora, ciclo il giorno prima alle 9 con testo discreto).
 
 ## Regole fisse dell'utente (rispettale sempre)
 - **Versione visibile** accanto al nome dell'app; toccandola: verifica aggiornamenti (oggi genera anche la notifica di prova).

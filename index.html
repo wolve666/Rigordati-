@@ -369,6 +369,138 @@ nav button.tab.attiva span.ic{transform:scale(1.12) translateY(-1px)}
 .mini-festa-scura i:nth-child(1){box-shadow:inset 0 3px 0 #F0548C}.mini-festa-scura i:nth-child(2){box-shadow:inset 0 3px 0 #F7931E}.mini-festa-scura i:nth-child(3){box-shadow:inset 0 3px 0 #2BB3A3}
 .mini-festa-chiara{background:#FBF1DE;border:1px solid #EBDDC4}.mini-festa-chiara i{background:#FFFDF8;border:1px solid #EBDDC4;border-left:3px solid}
 .mini-festa-chiara i:nth-child(1){border-left-color:#2BB3A3}.mini-festa-chiara i:nth-child(2){border-left-color:#F0548C}.mini-festa-chiara i:nth-child(3){border-left-color:#F7931E}
+
+/* ---------- famiglia ---------- */
+nav .tab[data-v=v-fam] .ic{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M8 22 24 9l16 13v17a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3z' fill='%23FF8A7A'/%3E%3Cpath d='M5 23 24 7l19 16' fill='none' stroke='%23E0614F' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M24 36s-8-4.6-8-10a4.3 4.3 0 0 1 8-2.2A4.3 4.3 0 0 1 32 26c0 5.4-8 10-8 10z' fill='%23fff'/%3E%3C/svg%3E")}
+.giorno .fam-ic{position:absolute;top:0;right:0;font-size:9px;line-height:1;letter-spacing:-2px;pointer-events:none}
+.giorno.malato:not(.sel){background:rgba(226,75,74,.16)}
+.fam-card{display:flex;align-items:center;gap:12px;background:var(--carta);border-radius:20px;padding:12px;margin-bottom:10px;cursor:pointer;box-shadow:0 3px 0 rgba(36,48,74,.12);animation:famPop .4s cubic-bezier(.3,1.4,.5,1) both}
+.fam-card svg{flex:none}
+.fc-t{flex:1;min-width:0}
+.fam-card .nm{font-weight:700;font-size:1.12rem}
+.fam-card .sub{font-size:.85rem;color:var(--ink-soft)}
+.fc-c.vuota{opacity:.25;filter:grayscale(1)}
+.pill-mal{display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:10px;background:#FCEBEB;color:#791F1F;margin-left:6px;vertical-align:2px}
+.fam-add{border:2px dashed var(--ink-soft);background:transparent}
+.titolo-sez.piccolo{font-size:1.3rem;margin:14px 2px 8px}
+.b-fam{background:#FFE3D3}.b-fam > svg:last-child{position:absolute;right:10px;bottom:10px}.b-fam .b-corpo{padding-right:30px}
+#fEvento [hidden],#fFiglio [hidden]{display:none!important}
+.riga .campo{flex:1;min-width:0}.campo input{width:100%;min-width:0}
+.b-fam .em svg{vertical-align:middle}
+[data-tema="inchiostro"] .b-fam{--x:#E8A07A}
+.ciclo-card{display:flex;align-items:center;gap:14px;border-radius:22px;padding:16px;margin:18px 0 10px;cursor:pointer;color:#F6ECF4;background:radial-gradient(160px 120px at 90% 10%,rgba(255,94,138,.35),transparent 70%),radial-gradient(160px 120px at 10% 100%,rgba(64,201,170,.22),transparent 70%),linear-gradient(135deg,#2A1236,#1B0F2E);box-shadow:0 4px 0 rgba(27,15,46,.25);animation:famPop .45s .15s both}
+.ciclo-card b{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:1.6rem;display:block;line-height:1.1}
+.ciclo-card small{opacity:.75}
+.ciclo-card .imp{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16)}
+#fBimbo,#fEvento,#fFiglio{max-height:90vh;overflow-y:auto}
+.b-testa{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+.b-testa h3{margin:0}
+.link{border:0;background:none;color:var(--ink-soft);font-family:var(--ui);font-size:.9rem;text-decoration:underline;padding:0;cursor:pointer}
+.cacche{display:flex;justify-content:space-around;margin:6px 0 10px}
+.cacche button{border:2px solid transparent;background:none;border-radius:18px;padding:4px 8px;display:flex;flex-direction:column;align-items:center;font-family:var(--ui);color:var(--ink-soft);font-size:.8rem;cursor:pointer;transition:transform .2s}
+.cacche button:active{transform:scale(.9)}
+.cacche button.sel{border-color:var(--ink);color:var(--ink);font-weight:600}
+.cacche button.sel svg{animation:famSalta .55s}
+.ev-cats,.ev-bimbi,.c-colori{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.ev-cats button,.ev-bimbi button,.sesso button{border:2px solid transparent;border-radius:14px;padding:8px 10px;background:var(--frigo);font-family:var(--ui);font-weight:600;font-size:.9rem;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px}
+.ev-cats button.sel,.ev-bimbi button.sel,.sesso button.sel{border-color:var(--ink)}
+.sesso{display:flex;gap:10px;margin:10px 0}.sesso button{flex:1;flex-direction:column;padding:10px}
+.c-colori button{width:38px;height:38px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+.c-colori button.sel{border-color:var(--ink)}
+.campo{display:flex;flex-direction:column;font-size:.78rem;color:var(--ink-soft);gap:3px}
+#eTesto,#eCm,#fNome{margin-top:6px}
+input[type=number]{width:100%;font-family:var(--ui);font-size:1.05rem;color:var(--ink);border:2px solid #d5dbe5;border-radius:14px;padding:12px;background:#fff}
+@keyframes famPop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes famSalta{0%{transform:scale(1)}35%{transform:scale(1.3) rotate(-8deg)}70%{transform:scale(.95) rotate(4deg)}100%{transform:scale(1)}}
+
+/* ---------- ciclo (sezione privata, stile notturno fisso) ---------- */
+#ciclo{position:fixed;inset:0;z-index:60;overflow-y:auto;overscroll-behavior:contain;font-family:'Instrument Sans',var(--ui);color:#F6ECF4;background:#170C26;opacity:0;pointer-events:none;transform:scale(1.04);transition:opacity .35s,transform .45s cubic-bezier(.2,.9,.3,1)}
+#ciclo.on{opacity:1;pointer-events:auto;transform:none}
+.c-app{position:relative;min-height:100%;padding:calc(14px + env(safe-area-inset-top,0px)) 18px calc(40px + env(safe-area-inset-bottom,0px));background:radial-gradient(420px 320px at 85% 6%,rgba(255,94,138,.28),transparent 60%),radial-gradient(380px 300px at 0% 30%,rgba(64,201,170,.17),transparent 60%),radial-gradient(420px 360px at 70% 70%,rgba(146,120,255,.22),transparent 60%),linear-gradient(180deg,#1B0F2E,#2A1236 50%,#170C26)}
+.c-app::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(1px 1px at 20px 30px,#fff8,transparent),radial-gradient(1px 1px at 300px 60px,#fff9,transparent),radial-gradient(1.5px 1.5px at 340px 200px,#fff6,transparent),radial-gradient(1px 1px at 60px 260px,#fff7,transparent),radial-gradient(1px 1px at 180px 120px,#fff5,transparent),radial-gradient(1.5px 1.5px at 40px 520px,#fff6,transparent),radial-gradient(1px 1px at 330px 640px,#fff7,transparent);animation:cStelle 4s ease-in-out infinite alternate}
+.c-top{display:flex;align-items:center;justify-content:space-between;position:relative}
+.c-top h1{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:2.4rem;margin:0;background:linear-gradient(90deg,#FFB3C8,#FFE3EC 50%,#C9B8FF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.c-btn{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:#F6ECF4;border-radius:14px;cursor:pointer;font-family:inherit}
+.c-back{width:42px;height:42px;display:grid;place-items:center}
+.c-lock{display:flex;gap:6px;align-items:center;font-size:.75rem;padding:8px 11px;border-radius:999px}
+.c-ring{position:relative;margin:4px auto 0;width:min(330px,88vw);aspect-ratio:1}
+.c-ring svg{width:100%;height:100%;overflow:visible}
+.c-seg{cursor:pointer;stroke-dasharray:var(--l) 999;stroke-dashoffset:0}
+.c-anim .c-seg{stroke-dashoffset:var(--l);animation:cTraccia .45s cubic-bezier(.3,.8,.4,1) forwards;animation-delay:calc(var(--i) * 28ms)}
+.c-perla{transform-box:fill-box;transform-origin:center;animation:cPerla 2.6s ease-in-out infinite}
+.c-orb{position:absolute;left:50%;top:50%;width:57%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;--o:64,201,170;background:radial-gradient(circle at 38% 30%,rgba(255,255,255,.18),rgba(255,255,255,.03) 45%,transparent 70%),radial-gradient(circle,rgba(var(--o),.24),rgba(var(--o),0) 70%);box-shadow:inset 0 0 40px rgba(255,255,255,.05),0 0 40px rgba(var(--o),.16);transition:box-shadow .4s}
+.c-orb.p,.c-orb.pp{--o:255,94,138}.c-orb.s{--o:146,120,255}.c-orb.n{--o:200,190,230}
+.c-anim .c-orb{animation:cSorgi .8s .2s cubic-bezier(.2,1.2,.4,1) both}
+.c-orb small{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;opacity:.7}
+.c-orb .n{font-family:'Instrument Serif',serif;font-size:5rem;line-height:.95;color:#fff;text-shadow:0 0 16px rgba(var(--o),.45)}
+.c-orb .f{font-family:'Instrument Serif',serif;font-style:italic;font-size:1.25rem;color:rgb(var(--o));filter:brightness(1.35)}
+.c-orb .vuoto-c{font-family:'Instrument Serif',serif;font-style:italic;font-size:1.35rem;padding:0 16px}
+.c-azione{display:block;margin:4px auto 0;padding:11px 20px;border-radius:999px;font-size:.95rem;font-weight:600;border:0;color:#fff;cursor:pointer;background:linear-gradient(135deg,#FF7A9C,#E23D6B);box-shadow:0 4px 14px rgba(226,61,107,.3)}
+.c-azione.gia{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);box-shadow:none}
+.c-chips{display:flex;gap:8px;margin-top:14px}
+.c-chip{flex:1;padding:10px 6px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);text-align:center}
+.c-chip b{display:block;font-family:'Instrument Serif',serif;font-weight:400;font-size:1.55rem;line-height:1.1}
+.c-chip span{font-size:.7rem;opacity:.75}
+.c-sec{margin-top:22px;position:relative}
+.c-sec h2{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:1.55rem;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.c-sec h2 > span:last-child{font-family:'Instrument Sans',var(--ui);font-style:normal;font-size:.72rem;opacity:.6}
+.c-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.c-t{border-radius:20px;padding:12px 2px 9px;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font-size:.72rem;color:#F6ECF4;cursor:pointer;font-family:inherit;transition:transform .2s}
+.c-t:active{transform:scale(.94)}
+.c-t em{display:block;font-style:normal;font-size:.62rem;opacity:.75;margin-top:1px;min-height:.8rem;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.c-t.on{background:rgba(255,94,138,.14);border-color:rgba(255,140,170,.5);box-shadow:0 0 10px rgba(255,94,138,.15)}
+.c-anim .c-t{animation:famPop .45s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(.35s + var(--i) * 45ms)}
+.c-ic{width:42px;height:42px;border-radius:14px;margin:0 auto 6px;display:grid;place-items:center}
+.c-ic svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.c-cal{border-radius:22px;padding:12px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.c-mese{display:flex;align-items:center;gap:6px}
+.c-mese button{width:30px;height:30px;border-radius:50%;font-size:1rem;font-style:normal}
+.c-cg{display:grid;grid-template-columns:repeat(7,1fr);gap:5px 2px;text-align:center;font-size:.82rem}
+.c-cg .h{font-size:.62rem;opacity:.5;letter-spacing:1px}
+.c-d{height:34px;width:34px;margin:auto;border-radius:50%;display:grid;place-items:center;border:1.5px solid transparent;background:none;color:#F6ECF4;font-family:inherit;font-size:.82rem;cursor:pointer;padding:0}
+.c-d.fuori{visibility:hidden}
+.c-d.p{background:linear-gradient(145deg,#FF7A9C,#E23D6B);color:#fff;box-shadow:0 0 8px rgba(255,94,138,.35)}
+.c-d.pp{border-color:rgba(255,122,156,.8);background:rgba(255,94,138,.15)}
+.c-d.m{border:1.5px dotted #FF9BB5}
+.c-d.f{border-color:rgba(110,235,200,.7);color:#BFF7E6}
+.c-d.o{background:linear-gradient(145deg,#6FF0CC,#22A585);color:#08231c;box-shadow:0 0 10px rgba(80,240,200,.45);font-weight:700}
+.c-d.s{border:1.5px dashed rgba(190,170,255,.7)}
+.c-d.oggi{outline:2px solid #fff;outline-offset:2px}
+.c-d.sel{transform:scale(1.12);box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.c-leg{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;font-size:.68rem;opacity:.85}
+.c-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.c-tip{margin-top:12px;padding:13px 14px;border-radius:18px;background:linear-gradient(120deg,rgba(146,120,255,.2),rgba(255,94,138,.14));border:1px solid rgba(255,255,255,.14);font-size:.85rem;line-height:1.45;display:flex;gap:10px}
+.c-num{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.c-num div{padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.c-num b{display:block;font-family:'Instrument Serif',serif;font-weight:400;font-size:1.45rem}
+.c-num span{font-size:.7rem;opacity:.75}
+.c-barre{margin-top:10px;border-radius:18px;padding:12px 10px 6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.c-barre rect{transform-box:fill-box;transform-origin:bottom}
+.c-anim .c-barre rect{animation:cCresci .6s cubic-bezier(.3,1.3,.5,1) both;animation-delay:calc(.5s + var(--i) * 50ms)}
+.c-strum{display:flex;gap:8px}
+.c-strum .c-btn{flex:1;padding:12px;font-weight:600;font-size:.88rem}
+.c-velo{position:fixed;inset:0;background:rgba(10,5,20,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:61}
+.c-velo.on{opacity:1;pointer-events:auto}
+.c-panel{position:fixed;left:0;right:0;bottom:0;z-index:62;max-height:85vh;overflow-y:auto;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));border-radius:26px 26px 0 0;background:linear-gradient(180deg,#2C1640,#1E1030);border-top:1px solid rgba(255,255,255,.15);transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.9,.3,1)}
+.c-panel.on{transform:none}
+.c-maniglia{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.25);margin:0 auto 12px}
+.c-panel h3{display:flex;align-items:center;gap:10px;font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;font-size:1.8rem;margin:0}
+.c-panel h3 .c-ic{margin:0;width:38px;height:38px}
+.c-panel p{font-size:.8rem;opacity:.7;margin:4px 0 12px}
+.c-opz{display:flex;flex-wrap:wrap;gap:8px}
+.c-opz button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#F6ECF4;border-radius:999px;padding:10px 16px;font-family:inherit;font-size:.92rem;text-transform:capitalize;cursor:pointer;transition:transform .15s,background .2s}
+.c-opz button.on{background:linear-gradient(135deg,#FF7A9C,#C04A9A);border-color:transparent;transform:scale(1.05)}
+.c-ok{width:100%;margin-top:16px;padding:13px;border-radius:16px;border:0;font-family:inherit;font-weight:600;font-size:1rem;color:#1B0F2E;background:#F6ECF4;cursor:pointer}
+.c-campo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:.92rem}
+.c-campo input[type=number]{width:84px;padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1rem;text-align:center}
+.c-campo input[type=checkbox]{width:22px;height:22px;accent-color:#FF7A9C}
+.c-rosso{background:none;border:0;color:#FF9BB5;font-family:inherit;text-decoration:underline;margin-top:14px;cursor:pointer}
+@keyframes cTraccia{to{stroke-dashoffset:0}}
+@keyframes cPerla{50%{transform:scale(1.18)}}
+@keyframes cSorgi{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes cCresci{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes cStelle{from{opacity:.55}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){#ciclo *,.fam-card,.ciclo-card{animation:none!important}.c-anim .c-seg{stroke-dashoffset:0}}
 </style>
 </head>
 <body>
@@ -408,14 +540,20 @@ nav button.tab.attiva span.ic{transform:scale(1.12) translateY(-1px)}
       <div class="titolo-sez">Da fare</div>
       <div class="lista" id="listaTodo"></div>
     </section>
+
+    <section class="vista" id="v-fam">
+      <div class="titolo-sez">Famiglia</div>
+      <div id="famCorpo"></div>
+    </section>
   </main>
 
   <div class="deco-bottom" aria-hidden="true"></div>
   <nav>
     <button class="tab attiva" data-v="v-cal"><span class="ic"></span>Calendario</button>
     <button class="tab" data-v="v-dom"><span class="ic"></span>Domande<span class="badge" id="badgeDom"></span></button>
-    <button class="fab" id="btnNuovo" aria-label="Nuovo">+</button>
     <button class="tab" data-v="v-todo"><span class="ic"></span>Da fare<span class="badge" id="badgeTodo"></span></button>
+    <button class="fab" id="btnNuovo" aria-label="Nuovo">+</button>
+    <button class="tab" data-v="v-fam"><span class="ic"></span>Famiglia</button>
   </nav>
 </div>
 
@@ -468,6 +606,73 @@ nav button.tab.attiva span.ic{transform:scale(1.12) translateY(-1px)}
   <button class="btn-sec" id="aggChiudi">Chiudi</button>
 </div>
 
+<!-- famiglia: scheda figlio -->
+<div class="foglio" id="fBimbo">
+  <div class="maniglia"></div>
+  <div id="bCorpo"></div>
+  <button class="btn-sec" data-indietro>Indietro</button>
+</div>
+
+<!-- famiglia: nuova voce o modifica -->
+<div class="foglio" id="fEvento">
+  <div class="maniglia"></div>
+  <h3 id="eTitolo"></h3>
+  <div class="ev-cats" id="eCats"></div>
+  <div class="ev-bimbi" id="eBimbi"></div>
+  <div class="cacche" id="eUmore"></div>
+  <input type="text" id="eTesto">
+  <input type="number" id="eCm" inputmode="decimal" step="0.5" placeholder="Altezza in cm">
+  <div class="riga" style="margin-top:8px">
+    <label class="campo">Giorno<input type="date" id="eData"></label>
+    <label class="campo" id="eFineL">Fine malattia<input type="date" id="eFine"></label>
+    <label class="campo" id="eOraL">Ora<input type="time" id="eOra"></label>
+  </div>
+  <p class="nota" id="eNota"></p>
+  <button class="btn-grande" id="eSalva">Salva</button>
+  <button class="btn-sec" id="eElimina" hidden>Elimina</button>
+  <button class="btn-sec" data-indietro>Indietro</button>
+</div>
+
+<!-- famiglia: aggiungi o modifica figlio -->
+<div class="foglio" id="fFiglio">
+  <div class="maniglia"></div>
+  <h3 id="fTit">Nuovo figlio</h3>
+  <input type="text" id="fNome" placeholder="Nome">
+  <div class="sesso" id="fSesso"></div>
+  <p class="nota">Colore dello sfondo</p>
+  <div class="c-colori" id="fColori"></div>
+  <button class="btn-grande" id="fSalva">Salva</button>
+  <button class="btn-sec" id="fElimina" hidden>Togli dalla famiglia</button>
+  <button class="btn-sec" data-indietro>Indietro</button>
+</div>
+
+<!-- ciclo: sezione privata -->
+<div id="ciclo" aria-hidden="true">
+  <div class="c-app" id="cApp">
+    <div class="c-top">
+      <button class="c-btn c-back" id="cIndietro" aria-label="Indietro"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h1>il mio ciclo</h1>
+      <span class="c-btn c-lock"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFB3C8" stroke-width="1.8" stroke-linecap="round"><path d="M12 11v3M8.5 15a4 4 0 0 1 0-6M15.5 15c.5-2 .5-4-.5-5.5M6 18a9 9 0 0 1 0-12M18 18c1-2.5 1.5-5 .5-8M12 6.5a5 5 0 0 1 3 1"/></svg>Solo tuo</span>
+    </div>
+    <div class="c-ring"><svg id="cRing" viewBox="0 0 330 330"></svg><div class="c-orb" id="cOrb"></div></div>
+    <button class="c-azione" id="cAzione"></button>
+    <div class="c-chips" id="cChips"></div>
+    <div class="c-sec"><h2><span id="cGiornoT">Com'è oggi</span><span>tocca per segnare</span></h2><div class="c-grid" id="cTiles"></div></div>
+    <div class="c-sec">
+      <h2><span class="c-mese"><button class="c-btn" id="cPrec" aria-label="Mese precedente">‹</button><span id="cMeseN"></span><button class="c-btn" id="cSucc" aria-label="Mese successivo">›</button></span><span>solo nella tua sezione</span></h2>
+      <div class="c-cal"><div class="c-cg" id="cCal"></div>
+        <div class="c-leg"><span><i style="background:#FF5E8A"></i>Ciclo</span><span><i style="border:1.5px solid #FF7A9C"></i>Previsto</span><span><i style="background:#40C9AA"></i>Fertile</span><span><i style="border:1.5px dashed #BEAAFF"></i>Pre-ciclo</span></div>
+      </div>
+      <div class="c-tip" id="cTip"></div>
+    </div>
+    <div class="c-sec"><h2><span>I tuoi numeri</span><span id="cNumN"></span></h2><div id="cStat"></div></div>
+    <div class="c-sec c-strum"><button class="c-btn" id="cImporta">Importa da Clue</button><button class="c-btn" id="cImpost">Impostazioni</button></div>
+    <input type="file" id="cFile" accept=".cluedata,.json,.csv,.txt,application/json,text/plain,text/csv" hidden>
+  </div>
+  <div class="c-velo" id="cVelo"></div>
+  <div class="c-panel" id="cPanel"></div>
+</div>
+
 <div id="accesso">
   <h1 class="logo">Rigordati!!</h1>
   <p>Il frigo di casa, ma nel telefono. Entra con il tuo account Google.</p>
@@ -484,7 +689,7 @@ import { getAuth, initializeAuth, indexedDBLocalPersistence, signInWithCredentia
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, setDoc, serverTimestamp, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
-const VERSIONE = 'v0.5.2';
+const VERSIONE = 'v0.6.0';
 const REPO = 'wolve666/Rigordati-';
 // APK (Capacitor) o versione web?
 const NATIVO = !!window.Capacitor?.isNativePlatform?.();
@@ -585,10 +790,12 @@ $('btnEsci').onclick = async () => { if (!confirm('Vuoi uscire da Rigordati!!?')
 
 onAuthStateChanged(auth, u => {
   if (stacca) { stacca(); stacca = null; }
+  fermaFamiglia();
   if (!u) { io = null; $('accesso').classList.add('on'); return; }
-  io = { email: u.email, nome: (u.displayName || u.email).split(' ')[0] };
+  io = { email: u.email, uid: u.uid, nome: (u.displayName || u.email).split(' ')[0] };
   $('accesso').classList.remove('on');
   preparaNotifiche();
+  avviaFamiglia(u);
   stacca = onSnapshot(voci, { includeMetadataChanges: true }, snap => {
     statoSync(snap.metadata.fromCache ? '' : 'ok', snap.metadata.fromCache ? 'Offline: uso i dati salvati sul telefono' : 'Collegato e sincronizzato');
     tutte = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -629,9 +836,10 @@ function disegnaMese() {
     const d = new Date(inizio); d.setDate(inizio.getDate() + i);
     const s = iso(d);
     const tipi = [...new Set(tutte.filter(v => v.data === s && !v.fatto).map(v => v.tipo))];
+    const fe = famDel(s), fic = [...new Set(fe.filter(e => !['cacca', 'altezza'].includes(e.cat)).map(e => CAT[e.cat][0]))].slice(0, 2).join('');
     const b = document.createElement('button');
-    b.className = 'giorno' + (d.getMonth() !== meseVisto.getMonth() ? ' fuori' : '') + (s === oggiS ? ' oggi' : '') + (s === giornoSel ? ' sel' : '');
-    b.innerHTML = `${d.getDate()}<span class="pallini">${tipi.map(t => `<i class="p-${t}"></i>`).join('')}</span>`;
+    b.className = 'giorno' + (d.getMonth() !== meseVisto.getMonth() ? ' fuori' : '') + (s === oggiS ? ' oggi' : '') + (s === giornoSel ? ' sel' : '') + (fe.some(e => e.cat === 'malattia') ? ' malato' : '');
+    b.innerHTML = `${d.getDate()}<span class="pallini">${tipi.map(t => `<i class="p-${t}"></i>`).join('')}</span>${fic ? `<span class="fam-ic">${fic}</span>` : ''}`;
     b.onclick = () => { if (s === giornoSel) { apriNuovo(s); return; } giornoSel = s; if (d.getMonth() !== meseVisto.getMonth()) { meseVisto = new Date(d.getFullYear(), d.getMonth(), 1); } disegna(); };
     g.appendChild(b);
   }
@@ -645,7 +853,10 @@ const recenti = (a, b) => (b.creato?.seconds || 9e9) - (a.creato?.seconds || 9e9
 function disegnaGiorno() {
   $('giornoTitolo').textContent = giornoSel === iso(oggi()) ? 'Oggi' : bella(giornoSel);
   const l = tutte.filter(v => v.data === giornoSel).sort(perOra);
-  riempi('listaGiorno', l, 'Giornata libera', 'Tocca + per aggiungere qualcosa.');
+  const f = famDel(giornoSel).sort((a, b) => quando(a).localeCompare(quando(b)));
+  if (!l.length && f.length) $('listaGiorno').innerHTML = '';
+  else riempi('listaGiorno', l, 'Giornata libera', 'Tocca + per aggiungere qualcosa.');
+  if (f.length) { $('listaGiorno').insertAdjacentHTML('beforeend', f.map(bigliettoFam).join('')); legaFam($('listaGiorno')); }
 }
 function disegnaDomande() {
   const l = tutte.filter(v => v.tipo === 'domanda').sort((a,b) => inAttesaPerMe(b) - inAttesaPerMe(a) || recenti(a,b));
@@ -730,7 +941,11 @@ function chiudiFoglio(daIndietro = false) {
   if (!daIndietro) history.back();
 }
 $('velo').onclick = () => chiudiFoglio();
+let saltaPop = false;
 window.addEventListener('popstate', () => {
+  if (saltaPop) { saltaPop = false; return; }
+  if (cPanel) { chiudiPanel(); return; }
+  if (cicloAperto) { chiudiCiclo(); return; }
   if (foglioAperto) { chiudiFoglio(true); return; }
   if (attuale() !== 'v-cal') vaiA('v-cal', false);
 });
@@ -738,7 +953,7 @@ window.addEventListener('popstate', () => {
 /* ---------- nuovo ---------- */
 let nTipo = 'todo', tipoScelto = false, dataScelta = false;
 let dataPre = '';
-$('btnNuovo').onclick = () => apriNuovo(foglioDelGiorno());
+$('btnNuovo').onclick = () => attuale() === 'v-fam' ? (bimbi().length ? apriEvento(null, 'impegno') : apriFiglio(null)) : apriNuovo(foglioDelGiorno());
 function apriNuovo(d) {
   dataPre = d;
   $('nTesto').value = ''; $('nData').value = d; $('nOra').value = '';
@@ -913,6 +1128,7 @@ function programmaPromemoria() {
           body: v.ora ? `Alle ${v.ora}` : 'Promemoria di Rigordati!!',
           schedule: { at: new Date(v.avvisoAt), allowWhileIdle: true }, extra: { id: v.id }
         }));
+      lista.push(...extraPromemoria());
       if (lista.length) await LN.schedule({ notifications: lista });
     } catch (e) { console.warn('Promemoria non programmati', e); }
   }, 1500);
@@ -926,6 +1142,535 @@ document.addEventListener('visibilitychange', async () => {
   const reg = await navigator.serviceWorker.getRegistration();
   (await reg?.getNotifications() || []).forEach(n => n.close());
 });
+
+/* ---------- famiglia: figli, regolarità, salute e impegni ---------- */
+const famCol = collection(db, 'famiglia');
+let fam = [], staccaFam = null, famErr = '', staccaCiclo = null;
+const CAT = { cacca: ['💩','Regolarità'], malattia: ['🤒','Malattia'], medicina: ['💊','Medicina'], visita: ['🩺','Visita'], sport: ['⚽','Sport'], impegno: ['🎒','Impegno'], altezza: ['📏','Altezza'] };
+const SEGNAPOSTO = { cacca: 'Nota (facoltativa)', malattia: 'es. febbre, tosse', medicina: 'es. Tachipirina 5 ml', visita: 'es. pediatra, dentista', sport: 'es. calcio, piscina', impegno: 'es. gita, recita, festa', altezza: '' };
+const NOTE_EV = { malattia: 'Lascia vuoto "Fine malattia" finché sta male: i giorni si colorano da soli.', medicina: "Con l'ora ti arriva un promemoria a quell'ora.", visita: "Con l'ora ti avviso un'ora prima.", sport: "Con l'ora ti avviso un'ora prima.", impegno: "Con l'ora ti avviso un'ora prima.", altezza: '', cacca: '' };
+const COLORI_BIMBI = ['#9FE1CB','#B5D4F4','#CECBF6','#F4C0D1','#FAC775','#C0DD97'];
+const UMORI = { buona: 'Buona', media: 'Così così', brutta: 'Brutta' };
+const bimbi = () => fam.filter(x => x.tipo === 'bimbo').sort((a, b) => (a.creato?.seconds || 9e9) - (b.creato?.seconds || 9e9));
+const eventi = () => fam.filter(x => x.tipo === 'evento');
+const bimbo = id => fam.find(x => x.id === id && x.tipo === 'bimbo');
+const gg = (a, b) => Math.round((daIso(b) - daIso(a)) / 864e5);
+const piu = (s, n) => { const d = daIso(s); d.setDate(d.getDate() + n); return iso(d); };
+const quando = e => (e.data || '') + (e.ora || '');
+const famDel = s => eventi().filter(e => e.data === s || (e.cat === 'malattia' && e.data < s && s <= (e.fine || iso(oggi()))));
+const malatoOra = id => { const o = iso(oggi()); return eventi().find(e => e.bimbo === id && e.cat === 'malattia' && e.data <= o && (!e.fine || e.fine >= o)); };
+const ultimi = (id, cat) => eventi().filter(e => e.bimbo === id && e.cat === cat).sort((a, b) => quando(b).localeCompare(quando(a)));
+const numIt = (n, d = 1) => Number(n).toFixed(d).replace('.', ',').replace(/,0$/, '');
+
+let svgN = 0;
+function avatar(b, px = 52) {
+  const k = 'av' + (++svgN), f = b?.sesso === 'f', bg = b?.colore || (f ? '#CECBF6' : '#9FE1CB');
+  const viso = `<rect x="42" y="56" width="12" height="14" rx="5" fill="#E8B98A"/><ellipse cx="48" cy="44" rx="17" ry="19" fill="#F2CBA0"/>`;
+  const occhi = `<ellipse cx="41" cy="46" rx="2" ry="2.6" fill="#2C2C2A"/><ellipse cx="55" cy="46" rx="2" ry="2.6" fill="#2C2C2A"/>`;
+  const corpo = f
+    ? `<path d="M26 40 Q22 70 28 84 L68 84 Q74 70 70 40Z" fill="#633806"/><path d="M14 100 Q16 70 48 68 Q80 70 82 100Z" fill="#D4537E"/>${viso}<path d="M30 46 Q27 22 48 21 Q69 22 66 46 Q62 30 52 29 Q44 34 34 34 Q31 38 30 46Z" fill="#854F0B"/><circle cx="62" cy="33" r="3" fill="#FAC775"/>${occhi}<path d="M38 42.5 l-2 -1.5 M58 42.5 l2 -1.5" stroke="#2C2C2A" stroke-width="1.4" stroke-linecap="round"/><path d="M43 53 Q48 57 53 53" stroke="#993556" stroke-width="2" fill="none" stroke-linecap="round"/>`
+    : `<path d="M14 100 Q16 70 48 68 Q80 70 82 100Z" fill="#185FA5"/><path d="M38 68 Q48 80 58 68" stroke="#E6F1FB" stroke-width="3" fill="none"/>${viso}<path d="M30 42 Q28 22 46 21 Q62 19 66 34 Q60 28 50 31 Q44 27 38 32 Q34 34 33 44Z" fill="#444441"/><path d="M46 21 Q56 14 64 22" stroke="#444441" stroke-width="5" fill="none" stroke-linecap="round"/>${occhi}<path d="M37 40 h7 M52 40 h7" stroke="#444441" stroke-width="2" stroke-linecap="round"/><path d="M43 54 Q48 58 54 53" stroke="#993C1D" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  return `<svg width="${px}" height="${px}" viewBox="0 0 96 96" aria-hidden="true"><clipPath id="${k}"><circle cx="48" cy="48" r="47"/></clipPath><circle cx="48" cy="48" r="47" fill="${bg}"/><g clip-path="url(#${k})">${corpo}</g></svg>`;
+}
+function cacca(u, px = 40) {
+  const base = `<path d="M6 40 Q4 33 12 32 H36 Q44 33 42 40 Q41 44 36 44 H12 Q7 44 6 40Z" fill="#854F0B"/><path d="M10 32 Q8 25 16 24 H32 Q40 25 38 32Z" fill="#BA7517"/><path d="M15 24 Q14 17 21 16 Q24 10 22 6 Q30 9 29 16 Q35 18 33 24Z" fill="#BA7517"/><path d="M10 36 Q11 34 14 34 M13 27 Q14 26 17 26 M18 19 Q19 18 21 18" stroke="#EF9F27" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+  const viso = {
+    buona: `<path d="M17 29 Q19 26 21 29 M27 29 Q29 26 31 29" stroke="#412402" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M18 36 Q24 42 30 36Z" fill="#412402"/><circle cx="15" cy="33" r="1.6" fill="#ED93B1"/><circle cx="33" cy="33" r="1.6" fill="#ED93B1"/>`,
+    media: `<ellipse cx="19" cy="29" rx="2.4" ry="2.8" fill="#fff"/><ellipse cx="29" cy="29" rx="2.4" ry="2.8" fill="#fff"/><circle cx="19.5" cy="29.5" r="1.3" fill="#412402"/><circle cx="29.5" cy="29.5" r="1.3" fill="#412402"/><path d="M19 38 Q24 37 29 38.5" stroke="#412402" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+    brutta: `<path d="M16 26 l5 2 M32 26 l-5 2" stroke="#412402" stroke-width="1.6" stroke-linecap="round"/><circle cx="19.5" cy="30" r="1.5" fill="#412402"/><circle cx="28.5" cy="30" r="1.5" fill="#412402"/><path d="M18 39 q2 -2 4 0 q2 2 4 0 q2 -2 4 0" stroke="#412402" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M36 22 q2 4 0 5 q-2 -1 0 -5Z" fill="#85B7EB"/>`
+  }[u] || '';
+  const puzza = u === 'brutta' ? `<path d="M40 6 q-2 3 0 6 q2 3 0 6 M45 9 q-2 3 0 6" stroke="#639922" stroke-width="1.5" fill="none" stroke-linecap="round"/>` : '';
+  return `<svg width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true">${puzza}${base}${viso}</svg>`;
+}
+
+function avviaFamiglia(u) {
+  fermaFamiglia();
+  staccaFam = onSnapshot(famCol, snap => {
+    famErr = ''; fam = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    disegna(); disegnaFamiglia(); if (foglioAperto === 'fBimbo') corpoBimbo(); programmaPromemoria();
+  }, err => { famErr = err.code; disegnaFamiglia(); });
+  staccaCiclo = onSnapshot(doc(db, 'ciclo', u.uid), s => {
+    cicloErr = ''; ciclo = s.exists() ? s.data() : null;
+    if (cicloAperto) disegnaCiclo(); programmaPromemoria();
+  }, err => { cicloErr = err.code; if (cicloAperto) disegnaCiclo(); });
+}
+function fermaFamiglia() {
+  if (staccaFam) { staccaFam(); staccaFam = null; }
+  if (staccaCiclo) { staccaCiclo(); staccaCiclo = null; }
+  fam = []; ciclo = null;
+}
+
+function disegnaFamiglia() {
+  const el = $('famCorpo'); if (!el) return;
+  const oggiS = iso(oggi());
+  let h = '';
+  if (famErr) h = `<div class="vuoto"><b>Manca un permesso</b>Su Firebase aggiungi la regola per la raccolta "famiglia", poi riapri l'app.</div>`;
+  else if (!bimbi().length) h = `<div class="vuoto"><b>La vostra squadra</b>Aggiungi i figli per segnare altezze, regolarità, salute e impegni.</div>`;
+  else h = bimbi().map((b, i) => {
+    const alt = ultimi(b.id, 'altezza'), mal = malatoOra(b.id), c = ultimi(b.id, 'cacca').find(e => e.data === oggiS);
+    let sub = alt[0] ? `${numIt(alt[0].cm)} cm` : 'Altezza da segnare';
+    if (alt[1]) { const d = alt[0].cm - alt[1].cm; sub += ` · ${d >= 0 ? '+' : ''}${numIt(d)} cm dall'ultima`; }
+    const pill = mal ? `<span class="pill-mal">🤒 malat${b.sesso === 'f' ? 'a' : 'o'} da ${gg(mal.data, oggiS) + 1} gg</span>` : '';
+    return `<div class="fam-card" data-b="${b.id}" style="animation-delay:${i * 70}ms">${avatar(b, 56)}<div class="fc-t"><div class="nm">${esc(b.nome)}${pill}</div><div class="sub">${sub}</div></div><div class="fc-c ${c ? '' : 'vuota'}">${cacca(c?.umore || 'buona', 42)}</div></div>`;
+  }).join('');
+  if (!famErr) h += `<button class="btn-sec fam-add" id="famAgg">+ Aggiungi un figlio</button>`;
+  const fine = piu(oggiS, 14);
+  const pr = eventi().filter(e => ['visita', 'sport', 'impegno', 'medicina'].includes(e.cat) && e.data >= oggiS && e.data <= fine).sort((a, b) => quando(a).localeCompare(quando(b))).slice(0, 8);
+  if (pr.length) h += `<div class="titolo-sez piccolo">Prossimi giorni</div><div class="lista" id="famProssimi">${pr.map(bigliettoFam).join('')}</div>`;
+  h += `<div class="ciclo-card" id="cicloCard"><span class="imp"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFB3C8" stroke-width="1.8" stroke-linecap="round"><path d="M12 11v3M8.5 15a4 4 0 0 1 0-6M15.5 15c.5-2 .5-4-.5-5.5M6 18a9 9 0 0 1 0-12M18 18c1-2.5 1.5-5 .5-8M12 6.5a5 5 0 0 1 3 1"/></svg></span><span><b>il mio ciclo</b><small>Solo tuo, si apre con l'impronta</small></span></div>`;
+  el.innerHTML = h;
+  el.querySelectorAll('.fam-card').forEach(c => c.onclick = () => apriBimbo(c.dataset.b));
+  if ($('famAgg')) $('famAgg').onclick = () => apriFiglio(null);
+  legaFam(el);
+  $('cicloCard').onclick = apriCiclo;
+}
+function legaFam(el) { el.querySelectorAll('.b-fam').forEach(b => b.onclick = () => apriEvento(b.dataset.e)); }
+
+function bigliettoFam(e) {
+  const b = bimbo(e.bimbo), [ic, nome] = CAT[e.cat] || ['📌', ''];
+  let t = e.testo || nome;
+  if (e.cat === 'cacca') t = `Regolarità: ${(UMORI[e.umore] || '').toLowerCase()}${e.testo ? ' · ' + e.testo : ''}`;
+  if (e.cat === 'altezza') t = `Altezza: ${numIt(e.cm)} cm`;
+  const meta = [];
+  if (b) meta.push(`<span><b>${esc(b.nome)}</b></span>`);
+  if (e.data) meta.push(`<span>📅 ${e.cat === 'malattia' ? 'dal ' : ''}<b>${bella(e.data)}</b></span>`);
+  if (e.cat === 'malattia') meta.push(`<span>${e.fine ? 'fino a ' + bella(e.fine) : 'in corso'}</span>`);
+  if (e.ora) meta.push(`<span>🕓 <b>${e.ora}</b></span>`);
+  return `<div class="biglietto b-fam" data-e="${e.id}"><span class="em">${e.cat === 'cacca' ? cacca(e.umore, 30) : ic}</span><div class="b-corpo"><div class="b-testo">${esc(t)}</div><div class="b-meta">${meta.join('')}</div></div>${b ? avatar(b, 30) : ''}</div>`;
+}
+
+// passa da un foglio all'altro senza aggiungere passi al tasto indietro
+function passaA(id) {
+  if (!foglioAperto) { apriFoglio(id); return; }
+  $(foglioAperto).classList.remove('on'); foglioAperto = id; $(id).classList.add('on'); $('velo').classList.add('on');
+}
+document.querySelectorAll('[data-indietro]').forEach(b => b.onclick = () => history.back());
+
+/* scheda del figlio */
+let bSel = null;
+function apriBimbo(id) { bSel = id; corpoBimbo(); passaA('fBimbo'); }
+function corpoBimbo() {
+  const b = bimbo(bSel); if (!b) { if (foglioAperto === 'fBimbo') history.back(); return; }
+  const oggiS = iso(oggi()), c = ultimi(b.id, 'cacca').find(e => e.data === oggiS);
+  const st = eventi().filter(e => e.bimbo === b.id).sort((x, y) => quando(y).localeCompare(quando(x))).slice(0, 15);
+  $('bCorpo').innerHTML = `<div class="b-testa">${avatar(b, 68)}<div><h3>${esc(b.nome)}</h3><button class="link" id="bMod">Modifica</button></div></div>
+    <p class="nota">Com'è andata oggi in bagno?</p>
+    <div class="cacche" id="bCacche">${Object.keys(UMORI).map(u => `<button data-u="${u}" class="${c?.umore === u ? 'sel' : ''}">${cacca(u, 54)}<span>${UMORI[u]}</span></button>`).join('')}</div>
+    <div class="ev-cats">${['malattia', 'medicina', 'visita', 'sport', 'impegno', 'altezza'].map(k => `<button data-c="${k}">${CAT[k][0]} ${CAT[k][1]}</button>`).join('')}</div>
+    <div class="titolo-sez piccolo">Ultime cose</div>
+    <div class="lista">${st.length ? st.map(bigliettoFam).join('') : `<div class="vuoto">Ancora niente: inizia da qui sopra.</div>`}</div>`;
+  $('bMod').onclick = () => apriFiglio(b.id);
+  $('bCacche').querySelectorAll('button').forEach(x => x.onclick = ev => {
+    const u = x.dataset.u;
+    $('bCacche').querySelectorAll('button').forEach(y => y.classList.toggle('sel', y === x));
+    const pr = c ? updateDoc(doc(db, 'famiglia', c.id), { umore: u }) : addDoc(famCol, { tipo: 'evento', cat: 'cacca', bimbo: b.id, data: oggiS, umore: u, testo: '', autore: io.email, autoreNome: io.nome, creato: serverTimestamp() });
+    pr.catch(e => toast('Non salvato: ' + (e.code || e.message)));
+    if (u === 'buona') coriandoli(ev.clientX, ev.clientY);
+    toast('Segnato');
+  });
+  $('bCorpo').querySelectorAll('.ev-cats button').forEach(x => x.onclick = () => apriEvento(null, x.dataset.c, b.id));
+  legaFam($('bCorpo'));
+}
+
+/* nuova voce della famiglia o modifica */
+let evCat = 'impegno', evBimbo = null, evId = null, evUmore = 'buona';
+function apriEvento(id, cat, bId) {
+  const e = id ? eventi().find(x => x.id === id) : null;
+  if (id && !e) return;
+  evId = id || null; evCat = e?.cat || cat || 'impegno'; evBimbo = e?.bimbo || bId || bimbi()[0]?.id || null; evUmore = e?.umore || 'buona';
+  $('eTesto').value = e?.testo || ''; $('eCm').value = e?.cm ?? '';
+  $('eData').value = e?.data || (attuale() === 'v-cal' ? giornoSel : iso(oggi())); $('eFine').value = e?.fine || ''; $('eOra').value = e?.ora || '';
+  $('eElimina').hidden = !evId; $('eSalva').textContent = evId ? 'Salva le modifiche' : 'Salva';
+  $('eCats').innerHTML = Object.keys(CAT).map(k => `<button data-c="${k}">${CAT[k][0]} ${CAT[k][1]}</button>`).join('');
+  $('eBimbi').innerHTML = bimbi().map(b => `<button data-b="${b.id}">${avatar(b, 26)}${esc(b.nome)}</button>`).join('');
+  $('eUmore').innerHTML = Object.keys(UMORI).map(u => `<button data-u="${u}">${cacca(u, 46)}<span>${UMORI[u]}</span></button>`).join('');
+  $('eCats').querySelectorAll('button').forEach(x => x.onclick = () => { evCat = x.dataset.c; aggiornaEv(); });
+  $('eBimbi').querySelectorAll('button').forEach(x => x.onclick = () => { evBimbo = x.dataset.b; aggiornaEv(); });
+  $('eUmore').querySelectorAll('button').forEach(x => x.onclick = () => { evUmore = x.dataset.u; aggiornaEv(); });
+  aggiornaEv(); passaA('fEvento');
+}
+function aggiornaEv() {
+  $('eCats').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x.dataset.c === evCat));
+  $('eBimbi').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x.dataset.b === evBimbo));
+  $('eUmore').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x.dataset.u === evUmore));
+  $('eUmore').hidden = evCat !== 'cacca'; $('eCm').hidden = evCat !== 'altezza'; $('eTesto').hidden = evCat === 'altezza';
+  $('eFineL').hidden = evCat !== 'malattia'; $('eOraL').hidden = ['malattia', 'altezza', 'cacca'].includes(evCat);
+  $('eTesto').placeholder = SEGNAPOSTO[evCat]; $('eNota').textContent = NOTE_EV[evCat];
+  $('eTitolo').textContent = `${CAT[evCat][0]} ${CAT[evCat][1]}`;
+}
+$('eSalva').onclick = () => {
+  if (!evBimbo) { toast('Prima aggiungi un figlio'); return; }
+  const d = { cat: evCat, bimbo: evBimbo, data: $('eData').value || iso(oggi()), testo: '', ora: '', fine: '' };
+  if (evCat === 'altezza') {
+    const cm = parseFloat(String($('eCm').value).replace(',', '.'));
+    if (!(cm > 30 && cm < 230)) { toast("Scrivi l'altezza in centimetri"); return; }
+    d.cm = cm;
+  } else d.testo = $('eTesto').value.trim();
+  if (evCat === 'malattia') d.fine = $('eFine').value || '';
+  if (!['malattia', 'altezza', 'cacca'].includes(evCat)) d.ora = $('eOra').value || '';
+  if (evCat === 'cacca') d.umore = evUmore;
+  if (d.fine && d.fine < d.data) { toast('La fine è prima dell\'inizio'); return; }
+  const pr = evId ? updateDoc(doc(db, 'famiglia', evId), d) : addDoc(famCol, { tipo: 'evento', ...d, autore: io.email, autoreNome: io.nome, creato: serverTimestamp() });
+  pr.catch(e => toast('Non salvato: ' + (e.code || e.message)));
+  history.back(); toast('Segnato');
+};
+$('eElimina').onclick = () => {
+  if (!evId || !confirm('Vuoi eliminare questa voce?')) return;
+  deleteDoc(doc(db, 'famiglia', evId)).catch(e => toast('Non eliminato: ' + e.code));
+  history.back();
+};
+
+/* aggiungi o modifica figlio */
+let fId = null, fSesso = 'm', fColore = COLORI_BIMBI[0];
+function apriFiglio(id) {
+  const b = id ? bimbo(id) : null;
+  fId = id; fSesso = b?.sesso || 'm'; fColore = b?.colore || COLORI_BIMBI[bimbi().length % COLORI_BIMBI.length];
+  $('fTit').textContent = b ? 'Modifica' : 'Nuovo figlio'; $('fNome').value = b?.nome || ''; $('fElimina').hidden = !b;
+  disegnaFiglio(); passaA('fFiglio');
+}
+function disegnaFiglio() {
+  $('fSesso').innerHTML = [['m', 'Ragazzo'], ['f', 'Ragazza']].map(([s, t]) => `<button data-s="${s}" class="${fSesso === s ? 'sel' : ''}">${avatar({ sesso: s, colore: fColore }, 64)}${t}</button>`).join('');
+  $('fColori').innerHTML = COLORI_BIMBI.map(c => `<button data-c="${c}" style="background:${c}" class="${fColore === c ? 'sel' : ''}" aria-label="Colore"></button>`).join('');
+  $('fSesso').querySelectorAll('button').forEach(x => x.onclick = () => { fSesso = x.dataset.s; disegnaFiglio(); });
+  $('fColori').querySelectorAll('button').forEach(x => x.onclick = () => { fColore = x.dataset.c; disegnaFiglio(); });
+}
+$('fSalva').onclick = () => {
+  const nome = $('fNome').value.trim(); if (!nome) { toast('Scrivi il nome'); return; }
+  const d = { nome, sesso: fSesso, colore: fColore };
+  const pr = fId ? updateDoc(doc(db, 'famiglia', fId), d) : addDoc(famCol, { tipo: 'bimbo', ...d, creato: serverTimestamp() });
+  pr.catch(e => toast('Non salvato: ' + (e.code || e.message)));
+  history.back();
+};
+$('fElimina').onclick = () => {
+  const b = bimbo(fId); if (!b || !confirm(`Togliere ${b.nome} e tutte le sue voci?`)) return;
+  eventi().filter(e => e.bimbo === fId).forEach(e => deleteDoc(doc(db, 'famiglia', e.id)).catch(() => {}));
+  deleteDoc(doc(db, 'famiglia', fId)).catch(e => toast('Non eliminato: ' + e.code));
+  history.back();
+};
+
+/* promemoria della famiglia e del ciclo (solo APK) */
+function extraPromemoria() {
+  const out = [], ora = Date.now();
+  for (const e of eventi()) {
+    if (!e.ora || !e.data || !['medicina', 'visita', 'sport', 'impegno'].includes(e.cat)) continue;
+    const [h, m] = e.ora.split(':').map(Number); let t = daIso(e.data); t.setHours(h, m, 0, 0);
+    if (e.cat !== 'medicina') t = new Date(t - 36e5);
+    if (t > ora) out.push({ id: numId('f' + e.id), channelId: 'promemoria', smallIcon: 'ic_stat_rigordati', iconColor: '#FF6B5B',
+      title: `${CAT[e.cat][0]} ${bimbo(e.bimbo)?.nome || ''}: ${e.testo || CAT[e.cat][1]}`, body: e.cat === 'medicina' ? `È ora: ${e.ora}` : `Alle ${e.ora}`,
+      schedule: { at: t, allowWhileIdle: true } });
+  }
+  out.sort((a, b) => a.schedule.at - b.schedule.at).splice(30);
+  const c = ciclo ? cicloCalc() : null;
+  if (c?.prossimo && c.imp.promemoria) {
+    const t = daIso(piu(c.prossimo, -1)); t.setHours(9, 0, 0, 0);
+    if (t > ora) out.push({ id: 777001, channelId: 'promemoria', smallIcon: 'ic_stat_rigordati', iconColor: '#FF6B5B', title: 'Rigordati!!', body: 'Un promemoria per te', schedule: { at: t, allowWhileIdle: true } });
+  }
+  return out;
+}
+
+/* ---------- ciclo: sezione privata, si apre con l'impronta ---------- */
+const CICLO_DEF = { durata: 28, flusso: 5, promemoria: true };
+let ciclo = null, cicloErr = '', cicloAperto = false, cPanel = false, cGiorno = iso(oggi()), cMese = oggi(), nascostoDa = 0;
+cMese.setDate(1);
+const VOCI_C = {
+  flusso:  ['Flusso', '#FF7A9C', '#C42E5A', '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>', ['macchie', 'leggero', 'medio', 'abbondante'], false],
+  dolore:  ['Dolore', '#FFA35C', '#D9622A', '<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>', ['crampi', 'testa', 'schiena', 'seno', 'pancia'], true],
+  umore:   ['Umore', '#FF8FD0', '#C04A9A', '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>', ['felice', 'tranquilla', 'sensibile', 'triste', 'irritabile', 'ansiosa'], true],
+  energia: ['Energia', '#FFD66B', '#D99A1C', '<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M6 10v4M9 10v4"/>', ['esausta', 'bassa', 'buona', 'piena'], false],
+  sonno:   ['Sonno', '#A895FF', '#6A4FE0', '<path d="M20 14A8 8 0 1 1 10 4a6.5 6.5 0 0 0 10 10z"/>', ['agitato', 'poco', 'bene', 'tanto'], false],
+  pelle:   ['Pelle', '#6FE6C6', '#1E9C7E', '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>', ['bene', 'brufoli', 'secca', 'grassa'], true],
+  voglie:  ['Voglie', '#FFB38A', '#C9683C', '<circle cx="12" cy="12" r="9"/><path d="M9 9h.01M14 8h.01M15 14h.01M10 15h.01"/>', ['dolce', 'salato', 'carboidrati', 'cioccolato'], true],
+  pillola: ['Pillola', '#7CC2FF', '#2F7AD6', '<rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-35 12 12)"/><path d="M10 8l5 7"/>', ['presa', 'dimenticata', 'doppia'], false]
+};
+const media = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const FASI = { p: 'ciclo', pp: 'ciclo previsto', m: 'macchie', f: 'giorni fertili', o: 'ovulazione probabile', s: 'pre-ciclo', '': 'fase tranquilla' };
+
+function cicloCalc() {
+  const g = ciclo?.giorni || {}, imp = { ...CICLO_DEF, ...(ciclo?.imp || {}) }, oggiS = iso(oggi());
+  const fl = new Set(Object.keys(g).filter(d => g[d]?.flusso && g[d].flusso !== 'macchie'));
+  const inizi = [...fl].sort().filter(d => ![1, 2, 3].some(k => fl.has(piu(d, -k))));
+  const flussi = inizi.map(s => { let n = 0; while (n < 14 && (fl.has(piu(s, n)) || fl.has(piu(s, n + 1)))) n++; return Math.max(1, n); });
+  const lung = [];
+  for (let i = 1; i < inizi.length; i++) { const l = gg(inizi[i - 1], inizi[i]); if (l >= 15 && l <= 60) lung.push(l); }
+  const L6 = lung.slice(-6), durata = Math.round(L6.length ? media(L6) : imp.durata);
+  const flusso = Math.round(media(flussi.slice(-6)) || imp.flusso);
+  const L12 = lung.slice(-12), m12 = media(L12), sd = L12.length > 1 ? Math.sqrt(media(L12.map(x => (x - m12) ** 2))) : null;
+  const err = []; for (let i = 3; i < lung.length; i++) err.push(Math.abs(lung[i] - media(lung.slice(Math.max(0, i - 6), i))));
+  const ultimo = inizi[inizi.length - 1] || null;
+  let giorno = null, prossimo = null, ritardo = 0, vecchio = false;
+  if (ultimo) {
+    giorno = gg(ultimo, oggiS) + 1; vecchio = giorno > 75;
+    if (!vecchio) { prossimo = piu(ultimo, durata); if (prossimo < oggiS) ritardo = gg(prossimo, oggiS); }
+  }
+  // inizi futuri previsti
+  const prev = [];
+  if (prossimo) { let x = prossimo < oggiS ? piu(oggiS, 1) : prossimo; for (let i = 0; i < 8; i++) { prev.push(x); x = piu(x, durata); } }
+  return { g, imp, oggiS, fl, inizi, prev, flussi, lung, durata, flusso, m12, sd, mae: err.length ? media(err) : null, ultimo, giorno, prossimo, ritardo, vecchio };
+}
+function faseDi(c, s) {
+  if (c.g[s]?.flusso === 'macchie') return 'm';
+  if (c.fl.has(s)) return 'p';
+  if (!c.inizi.length || s < c.inizi[0]) return '';
+  const st = [...c.inizi, ...c.prev];
+  let i = -1; for (let k = 0; k < st.length; k++) if (st[k] <= s) i = k;
+  if (i < 0) return '';
+  const S = st[i], N = st[i + 1] || piu(S, c.durata), L = gg(S, N), idx = gg(S, s) + 1;
+  if (L > 60) return '';
+  if (i >= c.inizi.length && idx <= c.flusso) return 'pp';
+  if (idx === L - 14) return 'o';
+  if (idx >= L - 19 && idx <= L - 13) return 'f';
+  if (idx >= L - 4) return 's';
+  return '';
+}
+function giornoDelCiclo(c, s) { let S = null; for (const x of c.inizi) if (x <= s) S = x; const n = S ? gg(S, s) + 1 : 0; return n > 0 && n <= 60 ? n : 0; }
+
+async function sblocca() {
+  const B = P.NativeBiometric;
+  if (!NATIVO || !B) return true;
+  try { const a = await B.isAvailable({ useFallback: true }); if (!a?.isAvailable) return true; } catch (_) { return true; }
+  try { await B.verifyIdentity({ reason: 'Apri il tuo ciclo', title: 'il mio ciclo', subtitle: 'Rigordati!!', description: "Usa l'impronta per entrare", useFallback: true, maxAttempts: 3 }); return true; }
+  catch (_) { return false; }
+}
+async function apriCiclo() {
+  if (!(await sblocca())) { toast('Impronta non riconosciuta'); return; }
+  cicloAperto = true; cGiorno = iso(oggi()); cMese = oggi(); cMese.setDate(1);
+  $('ciclo').classList.add('on'); $('ciclo').setAttribute('aria-hidden', 'false'); $('ciclo').scrollTop = 0;
+  history.pushState({ ciclo: 1 }, '');
+  disegnaCiclo(true);
+}
+function chiudiCiclo() {
+  if (cPanel) chiudiPanel(true);
+  cicloAperto = false; $('ciclo').classList.remove('on'); $('ciclo').setAttribute('aria-hidden', 'true');
+}
+$('cIndietro').onclick = () => history.back();
+// se l'app resta in sottofondo più di tre minuti, la sezione si richiude
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { nascostoDa = Date.now(); return; }
+  if (cicloAperto && nascostoDa && Date.now() - nascostoDa > 180000) { const n = cPanel ? 2 : 1; chiudiCiclo(); saltaPop = true; history.go(-n); }
+});
+
+function apriPanel(html) {
+  $('cPanel').innerHTML = `<div class="c-maniglia"></div>` + html;
+  $('cPanel').classList.add('on'); $('cVelo').classList.add('on');
+  if (!cPanel) history.pushState({ cpanel: 1 }, '');
+  cPanel = true;
+}
+function chiudiPanel() { cPanel = false; $('cPanel').classList.remove('on'); $('cVelo').classList.remove('on'); }
+$('cVelo').onclick = () => history.back();
+
+function salvaCiclo() {
+  if (!auth.currentUser) return;
+  for (const d of Object.keys(ciclo.giorni)) if (!Object.keys(ciclo.giorni[d]).length) delete ciclo.giorni[d];
+  setDoc(doc(db, 'ciclo', auth.currentUser.uid), ciclo).catch(e => toast('Non salvato: ' + (e.code || e.message)));
+  disegnaCiclo(); programmaPromemoria();
+}
+function segna(giorno, k, val) {
+  ciclo = ciclo || { imp: { ...CICLO_DEF }, giorni: {} }; ciclo.giorni = ciclo.giorni || {};
+  const g = ciclo.giorni[giorno] = { ...(ciclo.giorni[giorno] || {}) };
+  if (val == null || (Array.isArray(val) && !val.length)) delete g[k]; else g[k] = val;
+  salvaCiclo();
+}
+
+function disegnaCiclo(anim = false) {
+  if (!cicloAperto) return;
+  $('cApp').classList.toggle('c-anim', anim);
+  if (cicloErr) {
+    $('cOrb').innerHTML = `<div class="vuoto-c">Su Firebase manca la regola per "ciclo"</div>`; $('cRing').innerHTML = '';
+    ['cChips', 'cTiles', 'cCal', 'cStat'].forEach(i => $(i).innerHTML = ''); $('cTip').textContent = ''; $('cAzione').hidden = true; return;
+  }
+  const c = cicloCalc();
+  disegnaAnello(c, anim); disegnaOrb(c); disegnaChips(c, anim); disegnaTiles(c); disegnaCalC(c); disegnaNumeri(c);
+  $('cTip').innerHTML = `<span>✦</span><span>${consiglio(c)}</span>`;
+  const oggiF = c.g[c.oggiS]?.flusso;
+  $('cAzione').hidden = false; $('cAzione').classList.toggle('gia', !!oggiF);
+  $('cAzione').textContent = oggiF ? `Oggi: ${oggiF} · cambia` : (c.ritardo ? 'È arrivato oggi' : 'È arrivato il ciclo');
+  $('cAzione').onclick = () => oggiF ? scegli('flusso', c.oggiS) : (segna(c.oggiS, 'flusso', 'medio'), toast('Segnato: flusso medio. Toccalo per cambiarlo'));
+  if (anim) setTimeout(() => $('cApp').classList.remove('c-anim'), 2200);
+}
+function disegnaAnello(c, anim) {
+  const cx = 165, cy = 165, R = 142, attivo = c.ultimo && !c.vecchio;
+  const N = attivo ? Math.max(c.durata, c.giorno) : 28, S = attivo ? c.ultimo : null;
+  const pt = (a, r) => { a = (a - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+  let s = `<defs><linearGradient id="cgp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8FAB"/><stop offset="1" stop-color="#E23D6B"/></linearGradient><linearGradient id="cgf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8FF0D3"/><stop offset="1" stop-color="#22A585"/></linearGradient><linearGradient id="cgs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#CDBEFF"/><stop offset="1" stop-color="#7F64F0"/></linearGradient><filter id="cgl" filterUnits="userSpaceOnUse" x="0" y="0" width="330" height="330"><feGaussianBlur stdDeviation="3.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  s += `<circle cx="165" cy="165" r="120" fill="none" stroke="rgba(255,255,255,.08)" stroke-dasharray="1 7"/>`;
+  const seg = 360 / N, gap = Math.min(3.2, seg * .28);
+  for (let d = 1; d <= N; d++) {
+    const giorno = S ? piu(S, d - 1) : null, f = giorno ? faseDi(c, giorno) : '';
+    const a0 = (d - 1) * seg + gap / 2, a1 = d * seg - gap / 2, [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R);
+    const col = { p: 'url(#cgp)', pp: 'url(#cgp)', m: 'url(#cgp)', f: 'url(#cgf)', o: 'url(#cgf)', s: 'url(#cgs)' }[f] || 'rgba(255,255,255,.16)';
+    const l = (a1 - a0) * Math.PI / 180 * R + 1;
+    s += `<path class="c-seg" data-g="${giorno || ''}" d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${R} ${R} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" stroke="${col}" stroke-width="${f ? (f === 'pp' || f === 'm' ? 11 : 18) : 10}" ${f === 'pp' ? 'stroke-opacity=".55"' : ''} fill="none" stroke-linecap="round" ${f && f !== 'pp' ? 'filter="url(#cgl)"' : ''} style="--l:${l.toFixed(1)};--i:${d}"/>`;
+    if (d % 7 === 1) { const [lx, ly] = pt((d - .5) * seg, R - 28); s += `<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,.45)">${d}</text>`; }
+  }
+  if (attivo) {
+    const [px, py] = pt(0, R); s += `<text x="${(px + 16).toFixed(1)}" y="${(py - 13).toFixed(1)}" font-size="17">🌙</text>`;
+    const sel = Math.min(N, gg(S, cGiorno) + 1);
+    if (sel >= 1) { const [tx, ty] = pt((sel - .5) * seg, R), oggi_ = cGiorno === c.oggiS;
+      s += `<g class="c-perla"><circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="19" fill="rgba(255,255,255,.16)"/><circle cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="13" fill="${oggi_ ? '#fff' : '#FFE3EC'}"/><text x="${tx.toFixed(1)}" y="${(ty + 4.5).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1236">${sel}</text></g>`; }
+  }
+  $('cRing').innerHTML = s;
+  $('cRing').querySelectorAll('.c-seg').forEach(p => p.onclick = () => { if (p.dataset.g && p.dataset.g <= piu(c.oggiS, 60)) { cGiorno = p.dataset.g; disegnaCiclo(); } });
+}
+function disegnaOrb(c) {
+  const o = $('cOrb');
+  if (!c.ultimo || c.vecchio) { o.className = 'c-orb n'; o.innerHTML = `<div class="vuoto-c">${c.vecchio ? "Bentornata: segna l'ultimo ciclo" : 'Segna il primo giorno del ciclo'}</div>`; return; }
+  const f = faseDi(c, cGiorno), n = giornoDelCiclo(c, cGiorno) || (gg(c.ultimo, cGiorno) + 1);
+  o.className = 'c-orb ' + ({ o: 'f', m: 'p' }[f] || f || 'n');
+  const oggiSel = cGiorno === c.oggiS;
+  let fr = FASI[f];
+  if (oggiSel && c.ritardo) fr = `in ritardo di ${c.ritardo} ${c.ritardo === 1 ? 'giorno' : 'giorni'}`;
+  o.innerHTML = `<small>${oggiSel ? 'Oggi · giorno' : esc(bella(cGiorno))}</small><div class="n">${n}</div><div class="f">${fr}</div>`;
+}
+function disegnaChips(c, anim) {
+  const al = c.prossimo ? (c.ritardo ? ['+' + c.ritardo, 'giorni di ritardo'] : [gg(c.oggiS, c.prossimo), 'giorni al ciclo']) : ['–', 'giorni al ciclo'];
+  $('cChips').innerHTML = [al, [c.durata, 'durata media'], [c.flusso, 'giorni di flusso']].map(([v, t]) => `<div class="c-chip"><b data-v="${v}">${v}</b><span>${t}</span></div>`).join('');
+  if (anim) $('cChips').querySelectorAll('b').forEach(b => {
+    const fine = parseInt(b.dataset.v, 10); if (!(fine > 0) || String(fine) !== b.dataset.v) return;
+    const t0 = performance.now(); const passo = t => { const k = Math.min(1, (t - t0) / 900); b.textContent = Math.round(fine * (1 - (1 - k) ** 3)); if (k < 1) requestAnimationFrame(passo); }; requestAnimationFrame(passo);
+  });
+}
+function disegnaTiles(c) {
+  const v = c.g[cGiorno] || {};
+  $('cGiornoT').textContent = cGiorno === c.oggiS ? "Com'è oggi" : `Com'era ${daIso(cGiorno).getDate()} ${MESI[daIso(cGiorno).getMonth()]}`;
+  $('cTiles').innerHTML = Object.entries(VOCI_C).map(([k, [nome, c1, c2, ic]], i) => {
+    const x = v[k], val = Array.isArray(x) ? x.join(', ') : (x || '');
+    return `<button class="c-t ${val ? 'on' : ''}" data-k="${k}" style="--i:${i}"><div class="c-ic" style="background:linear-gradient(145deg,${c1},${c2});box-shadow:0 5px 12px ${c2}55"><svg viewBox="0 0 24 24">${ic}</svg></div>${nome}<em>${esc(val)}</em></button>`;
+  }).join('');
+  $('cTiles').querySelectorAll('.c-t').forEach(t => t.onclick = () => scegli(t.dataset.k, cGiorno));
+}
+function scegli(k, giorno) {
+  const [nome, c1, c2, ic, opz, multi] = VOCI_C[k];
+  const att = () => ciclo?.giorni?.[giorno]?.[k];
+  const sel = o => multi ? (att() || []).includes(o) : att() === o;
+  const bottoni = () => opz.map(o => `<button data-o="${o}" class="${sel(o) ? 'on' : ''}">${o}</button>`).join('');
+  apriPanel(`<h3><span class="c-ic" style="background:linear-gradient(145deg,${c1},${c2})"><svg viewBox="0 0 24 24">${ic}</svg></span>${nome}</h3><p>${giorno === iso(oggi()) ? 'Oggi' : esc(bella(giorno))}${multi ? ' · puoi sceglierne più di uno' : ''}</p><div class="c-opz" id="cOpz">${bottoni()}</div><button class="c-ok" id="cOk">Fatto</button>`);
+  const lega = () => $('cOpz').querySelectorAll('button').forEach(b => b.onclick = () => {
+    const o = b.dataset.o;
+    if (multi) { const a = [...(att() || [])]; const i = a.indexOf(o); i >= 0 ? a.splice(i, 1) : a.push(o); segna(giorno, k, a); }
+    else segna(giorno, k, att() === o ? null : o);
+    $('cOpz').innerHTML = bottoni(); lega();
+    if (!multi && att()) setTimeout(() => { if (cPanel) history.back(); }, 280);
+  });
+  lega(); $('cOk').onclick = () => history.back();
+}
+function disegnaCalC(c) {
+  $('cMeseN').textContent = `${MESI[cMese.getMonth()]}`;
+  let h = ['L', 'M', 'M', 'G', 'V', 'S', 'D'].map(x => `<div class="h">${x}</div>`).join('');
+  const vuoti = (cMese.getDay() + 6) % 7; for (let i = 0; i < vuoti; i++) h += '<div></div>';
+  const fine = new Date(cMese.getFullYear(), cMese.getMonth() + 1, 0).getDate();
+  for (let d = 1; d <= fine; d++) {
+    const s = iso(new Date(cMese.getFullYear(), cMese.getMonth(), d)), f = faseDi(c, s);
+    h += `<div><button class="c-d ${f} ${s === c.oggiS ? 'oggi' : ''} ${s === cGiorno ? 'sel' : ''}" data-g="${s}">${d}</button></div>`;
+  }
+  $('cCal').innerHTML = h;
+  $('cCal').querySelectorAll('.c-d').forEach(b => b.onclick = () => { cGiorno = b.dataset.g; disegnaCiclo(); });
+}
+$('cPrec').onclick = () => { cMese.setMonth(cMese.getMonth() - 1); disegnaCalC(cicloCalc()); };
+$('cSucc').onclick = () => { cMese.setMonth(cMese.getMonth() + 1); disegnaCalC(cicloCalc()); };
+
+function consiglio(c) {
+  if (!c.ultimo) return 'Segna il primo giorno del ciclo, oppure importa i tuoi dati da Clue: da lì in poi calcolo tutto io.';
+  const media_ = (filtro) => { const a = Object.keys(c.g).filter(d => filtro(c.g[d])).map(d => giornoDelCiclo(c, d)).filter(Boolean); return a.length >= 3 ? Math.round(media(a)) : 0; };
+  const en = media_(x => ['esausta', 'bassa'].includes(x.energia)), dol = media_(x => (x.dolore || []).length);
+  const pr = c.prossimo ? ` Il prossimo è previsto ${c.ritardo ? 'da' : 'per'} ${bella(c.prossimo)}${c.imp.promemoria ? ': il giorno prima ti mando un promemoria discreto' : ''}.` : '';
+  if (en) return `Di solito l'energia cala intorno al giorno ${en} del ciclo.${pr}`;
+  if (dol) return `I dolori arrivano in media intorno al giorno ${dol} del ciclo.${pr}`;
+  return pr.trim() || 'Segna qualche giorno in più e ti dico cosa noto.';
+}
+function disegnaNumeri(c) {
+  $('cNumN').textContent = c.inizi.length ? `${c.inizi.length} cicli registrati` : '';
+  if (c.lung.length < 2) { $('cStat').innerHTML = `<div class="c-tip"><span>✦</span><span>Servono almeno tre cicli per le statistiche. Con i dati di Clue partono subito.</span></div>`; return; }
+  const L = c.lung.slice(-12), mx = Math.max(...L), mn = Math.min(...L);
+  const reg = c.sd == null ? '–' : c.sd <= 2 ? 'Molto regolare' : c.sd <= 4 ? 'Regolare' : 'Variabile';
+  const prec = c.mae == null ? ['–', 'precisione: servono 5 cicli'] : [`± ${numIt(c.mae)} gg`, 'errore medio delle previsioni'];
+  let h = `<div class="c-num"><div><b>${numIt(c.m12)} gg</b><span>durata media${c.sd != null ? ` (± ${numIt(c.sd)})` : ''}</span></div><div><b>${mn}–${mx}</b><span>ciclo più corto e più lungo</span></div><div><b>${reg}</b><span>regolarità</span></div><div><b>${prec[0]}</b><span>${prec[1]}</span></div></div>`;
+  const W = 320, H = 110, bw = Math.min(22, (W - 10) / L.length - 6), top = Math.max(mx, 35), bot = Math.max(0, Math.min(mn, 21) - 4), y = v => H - 16 - (v - bot) / (top - bot) * (H - 32);
+  let b = `<svg viewBox="0 0 ${W} ${H}" width="100%"><defs><linearGradient id="cgb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8FAB"/><stop offset="1" stop-color="#7F64F0"/></linearGradient></defs>`;
+  b += `<line x1="0" x2="${W}" y1="${y(c.m12).toFixed(1)}" y2="${y(c.m12).toFixed(1)}" stroke="rgba(143,240,211,.6)" stroke-dasharray="4 4"/>`;
+  L.forEach((v, i) => { const x = 6 + i * ((W - 12) / L.length) + ((W - 12) / L.length - bw) / 2; b += `<rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${(H - 16 - y(v)).toFixed(1)}" rx="${(bw / 2).toFixed(1)}" fill="url(#cgb)" style="--i:${i}"/><text x="${(x + bw / 2).toFixed(1)}" y="${(y(v) - 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.75)">${v}</text>`; });
+  b += `<text x="${W}" y="${H - 2}" text-anchor="end" font-size="9" fill="rgba(255,255,255,.45)">ultimi ${L.length} cicli · linea = media</text></svg>`;
+  $('cStat').innerHTML = h + `<div class="c-barre">${b}</div>`;
+}
+
+$('cImpost').onclick = () => {
+  const imp = { ...CICLO_DEF, ...(ciclo?.imp || {}) };
+  apriPanel(`<h3>Impostazioni</h3><p>Valgono finché non ci sono abbastanza cicli segnati: poi uso le tue medie reali.</p>
+    <label class="c-campo">Durata del ciclo (giorni)<input type="number" id="iDur" min="18" max="45" value="${imp.durata}"></label>
+    <label class="c-campo">Giorni di flusso<input type="number" id="iFl" min="1" max="10" value="${imp.flusso}"></label>
+    <label class="c-campo">Promemoria discreto il giorno prima<input type="checkbox" id="iProm" ${imp.promemoria ? 'checked' : ''}></label>
+    <button class="c-ok" id="iSalva">Salva</button><button class="c-rosso" id="iCanc">Cancella tutti i dati del ciclo</button>`);
+  $('iSalva').onclick = () => {
+    ciclo = ciclo || { giorni: {} };
+    ciclo.imp = { durata: Math.min(45, Math.max(18, +$('iDur').value || 28)), flusso: Math.min(10, Math.max(1, +$('iFl').value || 5)), promemoria: $('iProm').checked };
+    salvaCiclo(); history.back(); toast('Salvato');
+  };
+  $('iCanc').onclick = () => {
+    if (!confirm('Cancellare davvero tutti i dati del ciclo? Non si possono recuperare.')) return;
+    ciclo = { imp: ciclo?.imp || { ...CICLO_DEF }, giorni: {} }; salvaCiclo(); history.back(); toast('Dati cancellati');
+  };
+};
+
+/* importazione da Clue (file .cluedata / JSON / CSV) */
+const MAPPA_CLUE = [
+  [/period|bleed|flow|menstru/, 'flusso', [[/spotting/, 'macchie'], [/heavy/, 'abbondante'], [/medium/, 'medio'], [/light/, 'leggero']]],
+  [/pain/, 'dolore', [[/cramp/, 'crampi'], [/head/, 'testa'], [/back/, 'schiena'], [/breast/, 'seno'], [/ovulation|abdom/, 'pancia']]],
+  [/mood|emotion/, 'umore', [[/happy/, 'felice'], [/calm/, 'tranquilla'], [/sensitive/, 'sensibile'], [/sad/, 'triste'], [/pms|irrit|angry/, 'irritabile'], [/anx|stress/, 'ansiosa']]],
+  [/energy/, 'energia', [[/exhaust/, 'esausta'], [/low|tired/, 'bassa'], [/energ|high/, 'piena'], [/ok|normal/, 'buona']]],
+  [/sleep/, 'sonno', [[/restless|bad|interrupt/, 'agitato'], [/0-3|3-6|little|short/, 'poco'], [/6-9|good/, 'bene'], [/9\+|> ?9|long|lot/, 'tanto']]],
+  [/skin/, 'pelle', [[/good|fine/, 'bene'], [/acne|pimple/, 'brufoli'], [/dry/, 'secca'], [/oily/, 'grassa']]],
+  [/crav/, 'voglie', [[/sweet/, 'dolce'], [/salt/, 'salato'], [/carb/, 'carboidrati'], [/chocol/, 'cioccolato']]],
+  [/pill|contracep/, 'pillola', [[/double/, 'doppia'], [/miss|late/, 'dimenticata'], [/taken|took|yes|true/, 'presa']]]
+];
+function leggiClue(testo) {
+  const rec = [];
+  const cammina = o => {
+    if (Array.isArray(o)) o.forEach(cammina);
+    else if (o && typeof o === 'object') {
+      const d = o.day || o.date || o.Day || o.Date;
+      if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) rec.push(o); else Object.values(o).forEach(cammina);
+    }
+  };
+  try { cammina(JSON.parse(testo)); }
+  catch (_) {
+    const righe = testo.split(/\r?\n/).filter(r => r.trim()), sep = (righe[0] || '').includes(';') ? ';' : ',';
+    const cap = (righe.shift() || '').split(sep).map(x => x.trim().replace(/"/g, '').toLowerCase());
+    const ci = cap.findIndex(x => /day|date|data|giorno/.test(x));
+    if (ci >= 0) righe.forEach(r => { const v = r.split(sep).map(x => x.trim().replace(/"/g, '')); const o = { day: v[ci] }; cap.forEach((h, i) => { if (i !== ci && v[i]) o[h] = v[i]; }); rec.push(o); });
+  }
+  const giorni = {};
+  const piatto = (o, pre = '') => Object.entries(o).flatMap(([k, v]) => /^(day|date)$/i.test(k) ? [] : (v && typeof v === 'object' ? (Array.isArray(v) ? v.flatMap(x => typeof x === 'object' && x ? piatto(x, pre + k + ' ') : [`${pre}${k} ${x}`]) : piatto(v, pre + k + ' ')) : [`${pre}${k} ${v}`]));
+  for (const o of rec) {
+    const d = String(o.day || o.date || o.Day || o.Date).slice(0, 10), g = giorni[d] || {};
+    for (const riga of piatto(o).map(x => x.toLowerCase())) {
+      if (/\b(false|0|null|no)$/.test(riga)) continue;
+      for (const [chiave, k, valori] of MAPPA_CLUE) {
+        if (!chiave.test(riga)) continue;
+        const ok = valori.find(([re]) => re.test(riga.replace(chiave, ' ')) || re.test(riga));
+        if (!ok) continue;
+        if (VOCI_C[k][5]) { g[k] = g[k] || []; if (!g[k].includes(ok[1])) g[k].push(ok[1]); }
+        else if (!g[k]) g[k] = ok[1];
+        break;
+      }
+    }
+    if (Object.keys(g).length) giorni[d] = g;
+  }
+  return giorni;
+}
+$('cImporta').onclick = () => $('cFile').click();
+$('cFile').onchange = async () => {
+  const f = $('cFile').files[0]; $('cFile').value = ''; if (!f) return;
+  let giorni = {};
+  try { giorni = leggiClue(await f.text()); } catch (_) {}
+  const n = Object.keys(giorni).length;
+  if (!n) { toast('In questo file non ho trovato dati di Clue'); return; }
+  ciclo = ciclo || { imp: { ...CICLO_DEF }, giorni: {} }; ciclo.giorni = ciclo.giorni || {};
+  for (const [d, g] of Object.entries(giorni)) { const att = ciclo.giorni[d] || {}; ciclo.giorni[d] = { ...g, ...att }; }
+  ciclo.importato = { da: 'Clue', quando: Date.now(), giorni: n };
+  salvaCiclo();
+  const c = cicloCalc();
+  toast(`Importati ${n} giorni e ${c.inizi.length} cicli da Clue`);
+  if (c.ultimo) { cGiorno = c.oggiS; disegnaCiclo(true); }
+};
 
 /* ---------- stato collegamento ---------- */
 let syncMsg = 'In collegamento…';

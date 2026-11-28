@@ -8,7 +8,8 @@ s = open(m).read()
 perm = ('<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n'
         '    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />\n'
         '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n'
-        '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n    ')
+        '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n'
+        '    <uses-permission android:name="android.permission.USE_BIOMETRIC" />\n    ')
 s = s.replace('<application', perm + '<application', 1)
 meta = ('    <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_rigordati" />\n'
         '        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/rigordati_corallo" />\n'
